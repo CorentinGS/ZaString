@@ -239,4 +239,202 @@ public class ZaSpanStringBuilderBasicTests
 
         Assert.Equal("User: John Doe, Age: 30, Balance: $1234.56, Active: true", builder.ToString());
     }
+
+    [Fact]
+    public void Indexer_ReadCharacter_ReturnsCorrectCharacter()
+    {
+        Span<char> buffer = stackalloc char[100];
+        var builder = ZaSpanStringBuilder.Create(buffer);
+        builder.Append("Hello");
+
+        Assert.Equal('H', builder[0]);
+        Assert.Equal('e', builder[1]);
+        Assert.Equal('l', builder[2]);
+        Assert.Equal('l', builder[3]);
+        Assert.Equal('o', builder[4]);
+    }
+
+    [Fact]
+    public void Indexer_ModifyCharacter_ChangesCharacterCorrectly()
+    {
+        Span<char> buffer = stackalloc char[100];
+        var builder = ZaSpanStringBuilder.Create(buffer);
+        builder.Append("Hello");
+
+        builder[0] = 'J';
+        builder[4] = 'y';
+
+        Assert.Equal("Jelly", builder.ToString());
+    }
+
+    [Fact]
+    public void Indexer_ModifyMultipleCharacters_WorksCorrectly()
+    {
+        Span<char> buffer = stackalloc char[100];
+        var builder = ZaSpanStringBuilder.Create(buffer);
+        builder.Append("World");
+
+        builder[0] = 'w';
+        builder[1] = 'o';
+        builder[2] = 'r';
+        builder[3] = 'd';
+        builder[4] = 's';
+
+        Assert.Equal("words", builder.ToString());
+    }
+
+    [Fact]
+    public void Indexer_NegativeIndex_ThrowsIndexOutOfRangeException()
+    {
+        Span<char> buffer = stackalloc char[100];
+        var builder = ZaSpanStringBuilder.Create(buffer);
+        builder.Append("Test");
+
+        bool threwForRead = false;
+        bool threwForWrite = false;
+
+        try
+        {
+            var _ = builder[-1];
+        }
+        catch (IndexOutOfRangeException)
+        {
+            threwForRead = true;
+        }
+
+        try
+        {
+            builder[-1] = 'X';
+        }
+        catch (IndexOutOfRangeException)
+        {
+            threwForWrite = true;
+        }
+
+        Assert.True(threwForRead);
+        Assert.True(threwForWrite);
+    }
+
+    [Fact]
+    public void Indexer_IndexEqualToLength_ThrowsIndexOutOfRangeException()
+    {
+        Span<char> buffer = stackalloc char[100];
+        var builder = ZaSpanStringBuilder.Create(buffer);
+        builder.Append("Test");
+
+        bool threwForRead = false;
+        bool threwForWrite = false;
+
+        try
+        {
+            var _ = builder[4];
+        }
+        catch (IndexOutOfRangeException)
+        {
+            threwForRead = true;
+        }
+
+        try
+        {
+            builder[4] = 'X';
+        }
+        catch (IndexOutOfRangeException)
+        {
+            threwForWrite = true;
+        }
+
+        Assert.True(threwForRead);
+        Assert.True(threwForWrite);
+    }
+
+    [Fact]
+    public void Indexer_IndexGreaterThanLength_ThrowsIndexOutOfRangeException()
+    {
+        Span<char> buffer = stackalloc char[100];
+        var builder = ZaSpanStringBuilder.Create(buffer);
+        builder.Append("Test");
+
+        bool threwForRead = false;
+        bool threwForWrite = false;
+
+        try
+        {
+            var _ = builder[10];
+        }
+        catch (IndexOutOfRangeException)
+        {
+            threwForRead = true;
+        }
+
+        try
+        {
+            builder[10] = 'X';
+        }
+        catch (IndexOutOfRangeException)
+        {
+            threwForWrite = true;
+        }
+
+        Assert.True(threwForRead);
+        Assert.True(threwForWrite);
+    }
+
+    [Fact]
+    public void Indexer_EmptyBuilder_ThrowsIndexOutOfRangeException()
+    {
+        Span<char> buffer = stackalloc char[100];
+        var builder = ZaSpanStringBuilder.Create(buffer);
+
+        bool threwForRead = false;
+        bool threwForWrite = false;
+
+        try
+        {
+            var _ = builder[0];
+        }
+        catch (IndexOutOfRangeException)
+        {
+            threwForRead = true;
+        }
+
+        try
+        {
+            builder[0] = 'X';
+        }
+        catch (IndexOutOfRangeException)
+        {
+            threwForWrite = true;
+        }
+
+        Assert.True(threwForRead);
+        Assert.True(threwForWrite);
+    }
+
+    [Fact]
+    public void Indexer_ModifyAfterAppend_WorksCorrectly()
+    {
+        Span<char> buffer = stackalloc char[100];
+        var builder = ZaSpanStringBuilder.Create(buffer);
+        
+        builder.Append("Hello");
+        builder[4] = '!';
+        builder.Append(" World");
+        builder[10] = '!';
+
+        Assert.Equal("Hell! Worl!", builder.ToString());
+    }
+
+    [Fact]
+    public void Indexer_RefReturn_AllowsDirectModification()
+    {
+        Span<char> buffer = stackalloc char[100];
+        var builder = ZaSpanStringBuilder.Create(buffer);
+        builder.Append("abcde");
+
+        ref char c = ref builder[2];
+        c = 'X';
+
+        Assert.Equal("abXde", builder.ToString());
+        Assert.Equal('X', builder[2]);
+    }
 }

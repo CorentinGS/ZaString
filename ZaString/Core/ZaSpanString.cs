@@ -41,6 +41,23 @@ public ref struct ZaSpanStringBuilder
     }
 
     /// <summary>
+    ///     Gets or sets the character at the specified index within the written portion of the buffer.
+    ///     This allows for modification of characters that have already been written.
+    /// </summary>
+    /// <param name="index">The zero-based index of the character to access.</param>
+    /// <returns>A reference to the character at the specified index.</returns>
+    /// <exception cref="IndexOutOfRangeException">Thrown when the index is negative or greater than or equal to the current length.</exception>
+    public ref char this[int index]
+    {
+        get
+        {
+            if ((uint)index >= (uint)Length)
+                throw new IndexOutOfRangeException();
+            return ref _buffer[index];
+        }
+    }
+
+    /// <summary>
     ///     Initializes a new instance of the <see cref="ZaSpanStringBuilder" /> struct.
     /// </summary>
     /// <param name="buffer">The character buffer to write into.</param>

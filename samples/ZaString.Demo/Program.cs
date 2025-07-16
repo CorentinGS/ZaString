@@ -34,6 +34,9 @@ public class Program
         BufferSizeDemo();
         Console.WriteLine();
 
+        CharacterModificationDemo();
+        Console.WriteLine();
+
         Console.WriteLine("Demo complete!");
     }
 
@@ -49,7 +52,7 @@ public class Program
         builder.Append("Hello, ");
         builder.Append("World!");
 
-        Console.WriteLine($"Built string: {builder.ToString()}");
+        Console.WriteLine($"Built span: {builder.AsSpan()}");
         Console.WriteLine($"Length: {builder.Length}");
         Console.WriteLine($"Remaining capacity: {builder.RemainingSpan.Length}");
     }
@@ -71,10 +74,12 @@ public class Program
             .Append(", Active: ")
             .Append(true);
 
-        Console.WriteLine($"User info: {builder.ToString()}");
+        
+        var span = builder.AsSpan();
+
+        Console.WriteLine($"User info: {span}");
 
         // Access as span (zero allocation)
-        var span = builder.AsSpan();
         Console.WriteLine($"As span length: {span.Length}");
     }
 
@@ -96,7 +101,7 @@ public class Program
             .Append(", Percentage: ")
             .Append(percentage, "P2");
 
-        Console.WriteLine($"Formatted: {builder.ToString()}");
+        Console.WriteLine($"Formatted: {builder.AsSpan()}");
     }
 
     private static void DateTimeFormattingDemo()
@@ -112,7 +117,7 @@ public class Program
             .Append(" at ")
             .Append(now, "HH:mm:ss");
 
-        Console.WriteLine($"DateTime: {builder.ToString()}");
+        Console.WriteLine($"DateTime: {builder.AsSpan()}");
     }
 
     private static void PerformanceComparisonDemo()
@@ -217,7 +222,76 @@ public class Program
         builder = ZaSpanStringBuilder.Create(properBuffer);
 
         builder.Append("This fits perfectly!");
-        Console.WriteLine($"Success: {builder.ToString()}");
+        Console.WriteLine($"Success: {builder.AsSpan()}");
         Console.WriteLine($"Used: {builder.Length}/{properBuffer.Length} characters");
+    }
+
+    private static void CharacterModificationDemo()
+    {
+        Console.WriteLine("--- Character Modification ---");
+
+        Span<char> buffer = stackalloc char[100];
+        var builder = ZaSpanStringBuilder.Create(buffer);
+
+        // Build initial content
+        builder.Append("Hello, World!");
+        Console.WriteLine($"Original: {builder.AsSpan()}");
+
+        // Example 1: Simple character replacement using indexer
+        builder[0] = 'J';  // Change 'H' to 'J'
+        builder[4] = 'y';  // Change 'o' to 'y'
+        Console.WriteLine($"After simple modifications: {builder.AsSpan()}");
+
+        // Example 2: Reading characters using indexer
+        Console.WriteLine($"Character at index 7: '{builder[7]}'");
+        Console.WriteLine($"Character at index 12: '{builder[12]}'");
+
+        // Example 3: Using ref return for direct manipulation
+        ref char exclamation = ref builder[12];
+        exclamation = '?';
+        Console.WriteLine($"After changing exclamation to question: {builder.AsSpan()}");
+
+        // Example 4: Text processing - convert to uppercase
+        builder.Append(" Converting to UPPER!");
+        Console.WriteLine($"Before uppercase conversion: {builder.AsSpan()}");
+        
+        for (int i = 0; i < builder.Length; i++)
+        {
+            if (char.IsLower(builder[i]))
+            {
+                builder[i] = char.ToUpper(builder[i]);
+            }
+        }
+        Console.WriteLine($"After uppercase conversion: {builder.AsSpan()}");
+
+        // Example 5: Pattern replacement - replace all 'E' with '3'
+        for (int i = 0; i < builder.Length; i++)
+        {
+            if (builder[i] == 'E')
+            {
+                builder[i] = '3';
+            }
+        }
+        Console.WriteLine($"After replacing E with 3: {builder.AsSpan()}");
+
+        // Example 6: Demonstrate bounds checking
+        Console.WriteLine("\nDemonstrating bounds checking:");
+        try
+        {
+            var invalidChar = builder[builder.Length]; // This should throw
+        }
+        catch (IndexOutOfRangeException)
+        {
+            Console.WriteLine("✓ IndexOutOfRangeException caught for index >= Length");
+        }
+
+        try
+        {
+            builder[-1] = 'X'; // This should throw
+        }
+        catch (IndexOutOfRangeException)
+        {
+            Console.WriteLine("✓ IndexOutOfRangeException caught for negative index");
+        }
     }
 }
