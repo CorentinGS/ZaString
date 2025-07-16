@@ -134,6 +134,72 @@ public static class ZaSpanStringBuilderExtensions
     }
 
     /// <summary>
+    ///     Conditionally appends a string to the builder if the condition is true.
+    /// </summary>
+    /// <param name="builder">The builder instance.</param>
+    /// <param name="condition">The condition to evaluate.</param>
+    /// <param name="value">The string to append if the condition is true. If null, the operation is a no-op.</param>
+    /// <returns>A reference to the builder to allow for method chaining.</returns>
+    public static ref ZaSpanStringBuilder AppendIf(ref this ZaSpanStringBuilder builder, bool condition, string? value)
+    {
+        if (condition)
+        {
+            builder.Append(value);
+        }
+        return ref builder;
+    }
+
+    /// <summary>
+    ///     Conditionally appends a read-only span of characters to the builder if the condition is true.
+    /// </summary>
+    /// <param name="builder">The builder instance.</param>
+    /// <param name="condition">The condition to evaluate.</param>
+    /// <param name="value">The span of characters to append if the condition is true.</param>
+    /// <returns>A reference to the builder to allow for method chaining.</returns>
+    public static ref ZaSpanStringBuilder AppendIf(ref this ZaSpanStringBuilder builder, bool condition, ReadOnlySpan<char> value)
+    {
+        if (condition)
+        {
+            builder.Append(value);
+        }
+        return ref builder;
+    }
+
+    /// <summary>
+    ///     Conditionally appends a single character to the builder if the condition is true.
+    /// </summary>
+    /// <param name="builder">The builder instance.</param>
+    /// <param name="condition">The condition to evaluate.</param>
+    /// <param name="value">The character to append if the condition is true.</param>
+    /// <returns>A reference to the builder to allow for method chaining.</returns>
+    public static ref ZaSpanStringBuilder AppendIf(ref this ZaSpanStringBuilder builder, bool condition, char value)
+    {
+        if (condition)
+        {
+            builder.Append(value);
+        }
+        return ref builder;
+    }
+
+    /// <summary>
+    ///     Conditionally appends a formatted value to the builder if the condition is true.
+    /// </summary>
+    /// <typeparam name="T">The type of the value, which must implement ISpanFormattable.</typeparam>
+    /// <param name="builder">The builder instance.</param>
+    /// <param name="condition">The condition to evaluate.</param>
+    /// <param name="value">The value to format and append if the condition is true.</param>
+    /// <param name="format">An optional format string for the value.</param>
+    /// <returns>A reference to the builder to allow for method chaining.</returns>
+    public static ref ZaSpanStringBuilder AppendIf<T>(ref this ZaSpanStringBuilder builder, bool condition, T value, ReadOnlySpan<char> format = default) where T : ISpanFormattable
+    {
+        if (condition)
+        {
+            builder.Append(value, format);
+        }
+        return ref builder;
+    }
+
+    /// <summary>
     ///     Throws a standardized exception for out-of-range errors.
     /// </summary>
     private static void ThrowOutOfRangeException()

@@ -613,4 +613,175 @@ public class ZaSpanStringBuilderBasicTests
         Assert.Equal(originalCapacity, builder.Capacity);
         Assert.Equal(50, builder.Capacity);
     }
+
+    [Fact]
+    public void AppendIf_String_TrueCondition_AppendsValue()
+    {
+        Span<char> buffer = stackalloc char[100];
+        var builder = ZaSpanStringBuilder.Create(buffer);
+
+        builder.AppendIf(true, "Hello");
+
+        Assert.Equal("Hello", builder.AsSpan());
+        Assert.Equal(5, builder.Length);
+    }
+
+    [Fact]
+    public void AppendIf_String_FalseCondition_AppendsNothing()
+    {
+        Span<char> buffer = stackalloc char[100];
+        var builder = ZaSpanStringBuilder.Create(buffer);
+
+        builder.AppendIf(false, "Hello");
+
+        Assert.Equal("", builder.AsSpan());
+        Assert.Equal(0, builder.Length);
+    }
+
+    [Fact]
+    public void AppendIf_String_NullValue_TrueCondition_AppendsNothing()
+    {
+        Span<char> buffer = stackalloc char[100];
+        var builder = ZaSpanStringBuilder.Create(buffer);
+
+        builder.AppendIf(true, null);
+
+        Assert.Equal("", builder.AsSpan());
+        Assert.Equal(0, builder.Length);
+    }
+
+    [Fact]
+    public void AppendIf_ReadOnlySpan_TrueCondition_AppendsValue()
+    {
+        Span<char> buffer = stackalloc char[100];
+        var builder = ZaSpanStringBuilder.Create(buffer);
+        var span = "World".AsSpan();
+
+        builder.AppendIf(true, span);
+
+        Assert.Equal("World", builder.AsSpan());
+        Assert.Equal(5, builder.Length);
+    }
+
+    [Fact]
+    public void AppendIf_ReadOnlySpan_FalseCondition_AppendsNothing()
+    {
+        Span<char> buffer = stackalloc char[100];
+        var builder = ZaSpanStringBuilder.Create(buffer);
+        var span = "World".AsSpan();
+
+        builder.AppendIf(false, span);
+
+        Assert.Equal("", builder.AsSpan());
+        Assert.Equal(0, builder.Length);
+    }
+
+    [Fact]
+    public void AppendIf_Char_TrueCondition_AppendsValue()
+    {
+        Span<char> buffer = stackalloc char[100];
+        var builder = ZaSpanStringBuilder.Create(buffer);
+
+        builder.AppendIf(true, 'A');
+
+        Assert.Equal("A", builder.AsSpan());
+        Assert.Equal(1, builder.Length);
+    }
+
+    [Fact]
+    public void AppendIf_Char_FalseCondition_AppendsNothing()
+    {
+        Span<char> buffer = stackalloc char[100];
+        var builder = ZaSpanStringBuilder.Create(buffer);
+
+        builder.AppendIf(false, 'A');
+
+        Assert.Equal("", builder.AsSpan());
+        Assert.Equal(0, builder.Length);
+    }
+
+    [Fact]
+    public void AppendIf_FormattedValue_TrueCondition_AppendsValue()
+    {
+        Span<char> buffer = stackalloc char[100];
+        var builder = ZaSpanStringBuilder.Create(buffer);
+
+        builder.AppendIf(true, 42);
+
+        Assert.Equal("42", builder.AsSpan());
+        Assert.Equal(2, builder.Length);
+    }
+
+    [Fact]
+    public void AppendIf_FormattedValue_FalseCondition_AppendsNothing()
+    {
+        Span<char> buffer = stackalloc char[100];
+        var builder = ZaSpanStringBuilder.Create(buffer);
+
+        builder.AppendIf(false, 42);
+
+        Assert.Equal("", builder.AsSpan());
+        Assert.Equal(0, builder.Length);
+    }
+
+    [Fact]
+    public void AppendIf_FormattedValueWithFormat_TrueCondition_AppendsFormattedValue()
+    {
+        Span<char> buffer = stackalloc char[100];
+        var builder = ZaSpanStringBuilder.Create(buffer);
+
+        builder.AppendIf(true, 42, "X4");
+
+        Assert.Equal("002A", builder.AsSpan());
+        Assert.Equal(4, builder.Length);
+    }
+
+    [Fact]
+    public void AppendIf_ChainedCalls_WorksCorrectly()
+    {
+        Span<char> buffer = stackalloc char[100];
+        var builder = ZaSpanStringBuilder.Create(buffer);
+        var isAdmin = true;
+        var hasPermission = false;
+
+        builder.Append("Status: ")
+            .AppendIf(isAdmin, "[Admin]")
+            .AppendIf(hasPermission, "[Permission]")
+            .Append(" User");
+
+        Assert.Equal("Status: [Admin] User", builder.AsSpan());
+        Assert.Equal(20, builder.Length);
+    }
+
+    [Fact]
+    public void AppendIf_MixedWithRegularAppends_WorksCorrectly()
+    {
+        Span<char> buffer = stackalloc char[100];
+        var builder = ZaSpanStringBuilder.Create(buffer);
+        var showId = true;
+        var showAge = false;
+
+        builder.Append("User: John")
+            .AppendIf(showId, " (ID: 123)")
+            .AppendIf(showAge, " Age: 25")
+            .Append(" - Active");
+
+        Assert.Equal("User: John (ID: 123) - Active", builder.AsSpan());
+        Assert.Equal(29, builder.Length);
+    }
+
+    [Fact]
+    public void AppendIf_AllTypesWithFalseCondition_ProducesEmptyString()
+    {
+        Span<char> buffer = stackalloc char[100];
+        var builder = ZaSpanStringBuilder.Create(buffer);
+
+        builder.AppendIf(false, "string")
+            .AppendIf(false, "span".AsSpan())
+            .AppendIf(false, 'c')
+            .AppendIf(false, 42);
+
+        Assert.Equal("", builder.AsSpan());
+        Assert.Equal(0, builder.Length);
+    }
 }
