@@ -3,12 +3,12 @@ using ZaString.Core;
 namespace ZaString.Extensions;
 
 /// <summary>
-/// Provides chainable, fluent extension methods for the <see cref="ZaSpanStringBuilder"/>.
+///     Provides chainable, fluent extension methods for the <see cref="ZaSpanStringBuilder" />.
 /// </summary>
 public static class ZaSpanStringBuilderExtensions
 {
     /// <summary>
-    /// Appends a read-only span of characters to the builder.
+    ///     Appends a read-only span of characters to the builder.
     /// </summary>
     /// <param name="builder">The builder instance.</param>
     /// <param name="value">The span of characters to append.</param>
@@ -27,7 +27,7 @@ public static class ZaSpanStringBuilderExtensions
     }
 
     /// <summary>
-    /// Appends a string to the builder.
+    ///     Appends a string to the builder.
     /// </summary>
     /// <param name="builder">The builder instance.</param>
     /// <param name="value">The string to append. If null, the operation is a no-op.</param>
@@ -38,11 +38,12 @@ public static class ZaSpanStringBuilderExtensions
         {
             builder.Append(value.AsSpan());
         }
+
         return ref builder;
     }
 
     /// <summary>
-    /// Appends a boolean value as "true" or "false".
+    ///     Appends a boolean value as "true" or "false".
     /// </summary>
     /// <param name="builder">The builder instance.</param>
     /// <param name="value">The boolean value to append.</param>
@@ -53,8 +54,8 @@ public static class ZaSpanStringBuilderExtensions
     }
 
     /// <summary>
-    /// Appends a value of a type that implements <see cref="ISpanFormattable"/>.
-    /// This is highly efficient for primitive types like numbers, dates, etc.
+    ///     Appends a value of a type that implements <see cref="ISpanFormattable" />.
+    ///     This is highly efficient for primitive types like numbers, dates, etc.
     /// </summary>
     /// <typeparam name="T">The type of the value, which must implement ISpanFormattable.</typeparam>
     /// <param name="builder">The builder instance.</param>
@@ -77,10 +78,10 @@ public static class ZaSpanStringBuilderExtensions
     }
 
     /// <summary>
-    /// Throws a standardized exception for out-of-range errors.
+    ///     Throws a standardized exception for out-of-range errors.
     /// </summary>
     private static void ThrowOutOfRangeException()
     {
-        throw new ArgumentOutOfRangeException($"value", "The destination buffer is too small.");
+        throw new ArgumentOutOfRangeException("value", "The destination buffer is too small.");
     }
 }

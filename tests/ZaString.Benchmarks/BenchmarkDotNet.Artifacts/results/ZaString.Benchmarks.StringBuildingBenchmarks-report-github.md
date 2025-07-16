@@ -8,8 +8,9 @@ AMD Ryzen 9 5950X 3.40GHz, 1 CPU, 32 logical and 16 physical cores
 
 
 ```
-| Method                                 | Mean       | Error    | StdDev   | Median     | Ratio | RatioSD | Gen0   | Gen1   | Allocated | Alloc Ratio |
-|--------------------------------------- |-----------:|---------:|---------:|-----------:|------:|--------:|-------:|-------:|----------:|------------:|
+
+| Method                                 |       Mean |    Error |   StdDev |     Median | Ratio | RatioSD |   Gen0 |   Gen1 | Allocated | Alloc Ratio |
+|----------------------------------------|-----------:|---------:|---------:|-----------:|------:|--------:|-------:|-------:|----------:|------------:|
 | StringBuilder_BasicAppends             |   184.3 ns |  7.20 ns | 21.23 ns |   175.1 ns |  1.01 |    0.16 | 0.0286 |      - |     480 B |        1.00 |
 | StringConcatenation_BasicAppends       |   122.4 ns |  2.40 ns |  2.24 ns |   122.5 ns |  0.67 |    0.08 | 0.0148 |      - |     248 B |        0.52 |
 | StringInterpolation_BasicAppends       |   146.7 ns |  2.98 ns |  8.30 ns |   148.6 ns |  0.81 |    0.10 | 0.0081 |      - |     136 B |        0.28 |
@@ -26,4 +27,4 @@ AMD Ryzen 9 5950X 3.40GHz, 1 CPU, 32 logical and 16 physical cores
 | ZaSpanStringBuilder_DateTimeFormatting |   154.1 ns |  3.07 ns |  6.55 ns |   152.7 ns |  0.85 |    0.10 |      - |      - |         - |        0.00 |
 
 Benchmarks with issues:
-  StringBuildingBenchmarks.ZaSpanStringBuilder_LargeString: DefaultJob
+StringBuildingBenchmarks.ZaSpanStringBuilder_LargeString: DefaultJob

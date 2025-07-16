@@ -1,5 +1,4 @@
 using System;
-using System.Runtime.CompilerServices;
 using System.Text;
 using BenchmarkDotNet.Attributes;
 using ZaString.Core;
@@ -49,16 +48,16 @@ public class StringBuildingBenchmarks
     {
         Span<char> buffer = stackalloc char[200];
         var builder = ZaSpanStringBuilder.Create(buffer);
-        
+
         builder.Append("Name: ")
-               .Append("John Doe")
-               .Append(", Age: ")
-               .Append(TestNumber)
-               .Append(", Balance: $")
-               .Append(TestDouble)
-               .Append(", Active: ")
-               .Append(TestBool);
-        
+            .Append("John Doe")
+            .Append(", Age: ")
+            .Append(TestNumber)
+            .Append(", Balance: $")
+            .Append(TestDouble)
+            .Append(", Active: ")
+            .Append(TestBool);
+
         return builder.Length;
     }
 
@@ -81,13 +80,12 @@ public class StringBuildingBenchmarks
         return span.Length;
     }
 
-    
 
     [Benchmark]
     public string StringBuilder_ManyAppends()
     {
         var sb = new StringBuilder();
-        for (int i = 0; i < 10; i++)
+        for (var i = 0; i < 10; i++)
         {
             sb.Append("Item ");
             sb.Append(i);
@@ -96,6 +94,7 @@ public class StringBuildingBenchmarks
             sb.Append(TestDouble);
             sb.Append(" - ");
         }
+
         return sb.ToString();
     }
 
@@ -104,19 +103,19 @@ public class StringBuildingBenchmarks
     {
         Span<char> buffer = stackalloc char[500];
         var builder = ZaSpanStringBuilder.Create(buffer);
-        
-        for (int i = 0; i < 10; i++)
+
+        for (var i = 0; i < 10; i++)
         {
             builder.Append("Item ")
-                   .Append(i)
-                   .Append(": ")
-                   .Append(TestString)
-                   .Append(TestDouble)
-                   .Append(" - ");
+                .Append(i)
+                .Append(": ")
+                .Append(TestString)
+                .Append(TestDouble)
+                .Append(" - ");
         }
 
         builder.AsSpan();
-        
+
         return builder.Length;
     }
 
@@ -138,14 +137,14 @@ public class StringBuildingBenchmarks
     {
         Span<char> buffer = stackalloc char[200];
         var builder = ZaSpanStringBuilder.Create(buffer);
-        
+
         builder.Append("Hex: ")
-               .Append(255, "X4")
-               .Append(", Currency: ")
-               .Append(1234.56, "C")
-               .Append(", Percentage: ")
-               .Append(0.85, "P2");
-        
+            .Append(255, "X4")
+            .Append(", Currency: ")
+            .Append(1234.56, "C")
+            .Append(", Percentage: ")
+            .Append(0.85, "P2");
+
         return builder.Length;
     }
 
@@ -153,12 +152,13 @@ public class StringBuildingBenchmarks
     public string StringBuilder_LargeString()
     {
         var sb = new StringBuilder();
-        for (int i = 0; i < 100; i++)
+        for (var i = 0; i < 100; i++)
         {
             sb.Append("This is iteration number ");
             sb.Append(i);
             sb.Append(" of the benchmark test. ");
         }
+
         return sb.ToString();
     }
 
@@ -167,14 +167,14 @@ public class StringBuildingBenchmarks
     {
         Span<char> buffer = stackalloc char[8000];
         var builder = ZaSpanStringBuilder.Create(buffer);
-        
+
         for (var i = 0; i < 100; i++)
         {
             builder.Append("This is iteration number ")
-                   .Append(i)
-                   .Append(" of the benchmark test. ");
+                .Append(i)
+                .Append(" of the benchmark test. ");
         }
-        
+
         builder.AsSpan();
         return builder.Length;
     }
@@ -197,12 +197,12 @@ public class StringBuildingBenchmarks
         Span<char> buffer = stackalloc char[200];
         var builder = ZaSpanStringBuilder.Create(buffer);
         var now = DateTime.Now;
-        
+
         builder.Append("Today is ")
-               .Append(now, "yyyy-MM-dd")
-               .Append(" at ")
-               .Append(now, "HH:mm:ss");
-        
+            .Append(now, "yyyy-MM-dd")
+            .Append(" at ")
+            .Append(now, "HH:mm:ss");
+
         builder.AsSpan();
         return builder.Length;
     }
@@ -220,7 +220,9 @@ public class NumberFormattingBenchmarks
     [Benchmark(Baseline = true)]
     public string ToString_Integer()
     {
-        return TestInt.ToString();
+        var sb = new StringBuilder();
+        sb.Append(TestInt);
+        return sb.ToString();
     }
 
     [Benchmark]
@@ -261,6 +263,7 @@ public class NumberFormattingBenchmarks
         Span<char> buffer = stackalloc char[20];
         var builder = ZaSpanStringBuilder.Create(buffer);
         builder.Append(TestFloat);
+        builder.AsSpan();
         return builder.Length;
     }
 
@@ -276,6 +279,7 @@ public class NumberFormattingBenchmarks
         Span<char> buffer = stackalloc char[25];
         var builder = ZaSpanStringBuilder.Create(buffer);
         builder.Append(TestLong);
+        builder.AsSpan();
         return builder.Length;
     }
 
@@ -306,6 +310,7 @@ public class NumberFormattingBenchmarks
         Span<char> buffer = stackalloc char[20];
         var builder = ZaSpanStringBuilder.Create(buffer);
         builder.Append(TestDouble, "F2");
+        builder.AsSpan();
         return builder.Length;
     }
 }
@@ -314,8 +319,8 @@ public class NumberFormattingBenchmarks
 [SimpleJob]
 public class SpanVsStringBenchmarks
 {
-    private char[] _buffer = new char[1000];
     private const string TestData = "This is a test string that will be used for comparison";
+    private readonly char[] _buffer = new char[1000];
 
     [Benchmark(Baseline = true)]
     public int ProcessString_Traditional()
@@ -328,7 +333,7 @@ public class SpanVsStringBenchmarks
     [Benchmark]
     public int ProcessSpan_ZaSpanStringBuilder()
     {
-        Span<char> buffer = _buffer.AsSpan();
+        var buffer = _buffer.AsSpan();
         var builder = ZaSpanStringBuilder.Create(buffer);
         builder.Append(TestData);
         return builder.Length;
@@ -337,7 +342,7 @@ public class SpanVsStringBenchmarks
     [Benchmark]
     public ReadOnlySpan<char> GetSpan_ZaSpanStringBuilder()
     {
-        Span<char> buffer = _buffer.AsSpan();
+        var buffer = _buffer.AsSpan();
         var builder = ZaSpanStringBuilder.Create(buffer);
         builder.Append(TestData);
         return builder.AsSpan();
@@ -346,7 +351,7 @@ public class SpanVsStringBenchmarks
     [Benchmark]
     public string GetString_ZaSpanStringBuilder()
     {
-        Span<char> buffer = _buffer.AsSpan();
+        var buffer = _buffer.AsSpan();
         var builder = ZaSpanStringBuilder.Create(buffer);
         builder.Append(TestData);
         return builder.ToString();

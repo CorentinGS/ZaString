@@ -8,7 +8,8 @@ AMD Ryzen 9 5950X 3.40GHz, 1 CPU, 32 logical and 16 physical cores
 
 
 ```
-| Method    | Mean      | Error     | StdDev    | Median    |
-|---------- |----------:|----------:|----------:|----------:|
+
+| Method    |      Mean |     Error |    StdDev |    Median |
+|-----------|----------:|----------:|----------:|----------:|
 | Scenario1 | 0.0017 ns | 0.0045 ns | 0.0056 ns | 0.0000 ns |
 | Scenario2 | 0.0146 ns | 0.0179 ns | 0.0167 ns | 0.0102 ns |

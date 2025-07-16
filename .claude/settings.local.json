@@ -5,7 +5,8 @@
       "Bash(dotnet build)",
       "Bash(dotnet test)",
       "Bash(dotnet run:*)",
-      "Bash(dotnet test:*)"
+      "Bash(dotnet test:*)",
+      "Bash(dotnet build:*)"
     ],
     "deny": []
   }
