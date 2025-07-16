@@ -1,18 +1,14 @@
 ﻿
 Microsoft Visual Studio Solution File, Format Version 12.00
-Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "src", "src", "{25B3ED8E-401A-41F8-8ADE-E88C2BEE319F}"
-EndProject
-Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "tests", "tests", "{1D25ED34-8088-49F2-B07B-F251402CE6F9}"
-EndProject
-Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "samples", "samples", "{5D20AA90-6969-D8BD-9DCD-8634F4692FDA}"
-EndProject
 Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "ZaString.Demo", "samples\ZaString.Demo\ZaString.Demo.csproj", "{C7C06E2A-A619-4C6A-8B87-798EF34C02BD}"
 EndProject
 Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "ZaString.Benchmarks", "tests\ZaString.Benchmarks\ZaString.Benchmarks.csproj", "{F35C3014-A624-4F58-B945-51511193D106}"
 EndProject
 Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "ZaString.Tests", "tests\ZaString.Tests\ZaString.Tests.csproj", "{6B44B7C5-B829-42D4-8AB1-9B85D82A7072}"
 EndProject
-Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "ZaString", "src\ZaString\ZaString.csproj", "{20EC5884-17DE-40E8-95DE-5277E9E72F26}"
+Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "src", "src", "{827E0CD3-B72D-47B6-A68D-7590B98EB39B}"
+EndProject
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "ZaString", "src\ZaString\ZaString.csproj", "{08CE1784-0E5C-4AF3-8F42-5E27FA8313CE}"
 EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution
@@ -60,23 +56,23 @@ Global
 		{6B44B7C5-B829-42D4-8AB1-9B85D82A7072}.Release|x64.Build.0 = Release|Any CPU
 		{6B44B7C5-B829-42D4-8AB1-9B85D82A7072}.Release|x86.ActiveCfg = Release|Any CPU
 		{6B44B7C5-B829-42D4-8AB1-9B85D82A7072}.Release|x86.Build.0 = Release|Any CPU
-		{20EC5884-17DE-40E8-95DE-5277E9E72F26}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
-		{20EC5884-17DE-40E8-95DE-5277E9E72F26}.Debug|Any CPU.Build.0 = Debug|Any CPU
-		{20EC5884-17DE-40E8-95DE-5277E9E72F26}.Debug|x64.ActiveCfg = Debug|Any CPU
-		{20EC5884-17DE-40E8-95DE-5277E9E72F26}.Debug|x64.Build.0 = Debug|Any CPU
-		{20EC5884-17DE-40E8-95DE-5277E9E72F26}.Debug|x86.ActiveCfg = Debug|Any CPU
-		{20EC5884-17DE-40E8-95DE-5277E9E72F26}.Debug|x86.Build.0 = Debug|Any CPU
-		{20EC5884-17DE-40E8-95DE-5277E9E72F26}.Release|Any CPU.ActiveCfg = Release|Any CPU
-		{20EC5884-17DE-40E8-95DE-5277E9E72F26}.Release|Any CPU.Build.0 = Release|Any CPU
-		{20EC5884-17DE-40E8-95DE-5277E9E72F26}.Release|x64.ActiveCfg = Release|Any CPU
-		{20EC5884-17DE-40E8-95DE-5277E9E72F26}.Release|x64.Build.0 = Release|Any CPU
-		{20EC5884-17DE-40E8-95DE-5277E9E72F26}.Release|x86.ActiveCfg = Release|Any CPU
-		{20EC5884-17DE-40E8-95DE-5277E9E72F26}.Release|x86.Build.0 = Release|Any CPU
+		{08CE1784-0E5C-4AF3-8F42-5E27FA8313CE}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{08CE1784-0E5C-4AF3-8F42-5E27FA8313CE}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{08CE1784-0E5C-4AF3-8F42-5E27FA8313CE}.Debug|x64.ActiveCfg = Debug|Any CPU
+		{08CE1784-0E5C-4AF3-8F42-5E27FA8313CE}.Debug|x64.Build.0 = Debug|Any CPU
+		{08CE1784-0E5C-4AF3-8F42-5E27FA8313CE}.Debug|x86.ActiveCfg = Debug|Any CPU
+		{08CE1784-0E5C-4AF3-8F42-5E27FA8313CE}.Debug|x86.Build.0 = Debug|Any CPU
+		{08CE1784-0E5C-4AF3-8F42-5E27FA8313CE}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{08CE1784-0E5C-4AF3-8F42-5E27FA8313CE}.Release|Any CPU.Build.0 = Release|Any CPU
+		{08CE1784-0E5C-4AF3-8F42-5E27FA8313CE}.Release|x64.ActiveCfg = Release|Any CPU
+		{08CE1784-0E5C-4AF3-8F42-5E27FA8313CE}.Release|x64.Build.0 = Release|Any CPU
+		{08CE1784-0E5C-4AF3-8F42-5E27FA8313CE}.Release|x86.ActiveCfg = Release|Any CPU
+		{08CE1784-0E5C-4AF3-8F42-5E27FA8313CE}.Release|x86.Build.0 = Release|Any CPU
 	EndGlobalSection
 	GlobalSection(SolutionProperties) = preSolution
 		HideSolutionNode = FALSE
 	EndGlobalSection
 	GlobalSection(NestedProjects) = preSolution
-		{20EC5884-17DE-40E8-95DE-5277E9E72F26} = {25B3ED8E-401A-41F8-8ADE-E88C2BEE319F}
+		{08CE1784-0E5C-4AF3-8F42-5E27FA8313CE} = {827E0CD3-B72D-47B6-A68D-7590B98EB39B}
 	EndGlobalSection
 EndGlobal

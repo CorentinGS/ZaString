@@ -8,7 +8,7 @@
     </PropertyGroup>
 
     <ItemGroup>
-        <ProjectReference Include="..\..\src\ZaString\ZaString.csproj" />
+        <ProjectReference Include="..\..\src\ZaString\ZaString.csproj"/>
     </ItemGroup>
 
 </Project>

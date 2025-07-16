@@ -46,7 +46,10 @@ public ref struct ZaSpanStringBuilder
     /// </summary>
     /// <param name="index">The zero-based index of the character to access.</param>
     /// <returns>A reference to the character at the specified index.</returns>
-    /// <exception cref="IndexOutOfRangeException">Thrown when the index is negative or greater than or equal to the current length.</exception>
+    /// <exception cref="IndexOutOfRangeException">
+    ///     Thrown when the index is negative or greater than or equal to the current
+    ///     length.
+    /// </exception>
     public ref char this[int index]
     {
         get

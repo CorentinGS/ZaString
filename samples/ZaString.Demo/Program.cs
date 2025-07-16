@@ -74,7 +74,7 @@ public class Program
             .Append(", Active: ")
             .Append(true);
 
-        
+
         var span = builder.AsSpan();
 
         Console.WriteLine($"User info: {span}");
@@ -238,8 +238,8 @@ public class Program
         Console.WriteLine($"Original: {builder.AsSpan()}");
 
         // Example 1: Simple character replacement using indexer
-        builder[0] = 'J';  // Change 'H' to 'J'
-        builder[4] = 'y';  // Change 'o' to 'y'
+        builder[0] = 'J'; // Change 'H' to 'J'
+        builder[4] = 'y'; // Change 'o' to 'y'
         Console.WriteLine($"After simple modifications: {builder.AsSpan()}");
 
         // Example 2: Reading characters using indexer
@@ -247,31 +247,33 @@ public class Program
         Console.WriteLine($"Character at index 12: '{builder[12]}'");
 
         // Example 3: Using ref return for direct manipulation
-        ref char exclamation = ref builder[12];
+        ref var exclamation = ref builder[12];
         exclamation = '?';
         Console.WriteLine($"After changing exclamation to question: {builder.AsSpan()}");
 
         // Example 4: Text processing - convert to uppercase
         builder.Append(" Converting to UPPER!");
         Console.WriteLine($"Before uppercase conversion: {builder.AsSpan()}");
-        
-        for (int i = 0; i < builder.Length; i++)
+
+        for (var i = 0; i < builder.Length; i++)
         {
             if (char.IsLower(builder[i]))
             {
                 builder[i] = char.ToUpper(builder[i]);
             }
         }
+
         Console.WriteLine($"After uppercase conversion: {builder.AsSpan()}");
 
         // Example 5: Pattern replacement - replace all 'E' with '3'
-        for (int i = 0; i < builder.Length; i++)
+        for (var i = 0; i < builder.Length; i++)
         {
             if (builder[i] == 'E')
             {
                 builder[i] = '3';
             }
         }
+
         Console.WriteLine($"After replacing E with 3: {builder.AsSpan()}");
 
         // Example 6: Demonstrate bounds checking

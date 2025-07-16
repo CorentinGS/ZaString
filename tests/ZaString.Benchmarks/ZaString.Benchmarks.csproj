@@ -17,6 +17,6 @@
         <PackageReference Include="BenchmarkDotNet.Diagnostics.Windows" Version="0.15.2"/>
     </ItemGroup>
     <ItemGroup>
-        <ProjectReference Include="..\..\src\ZaString\ZaString.csproj" />
+        <ProjectReference Include="..\..\src\ZaString\ZaString.csproj"/>
     </ItemGroup>
 </Project>

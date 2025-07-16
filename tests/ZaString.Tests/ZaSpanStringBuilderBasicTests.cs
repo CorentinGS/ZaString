@@ -1,5 +1,3 @@
-
-
 using ZaString.Core;
 using ZaString.Extensions;
 
@@ -292,8 +290,8 @@ public class ZaSpanStringBuilderBasicTests
         var builder = ZaSpanStringBuilder.Create(buffer);
         builder.Append("Test");
 
-        bool threwForRead = false;
-        bool threwForWrite = false;
+        var threwForRead = false;
+        var threwForWrite = false;
 
         try
         {
@@ -324,8 +322,8 @@ public class ZaSpanStringBuilderBasicTests
         var builder = ZaSpanStringBuilder.Create(buffer);
         builder.Append("Test");
 
-        bool threwForRead = false;
-        bool threwForWrite = false;
+        var threwForRead = false;
+        var threwForWrite = false;
 
         try
         {
@@ -356,8 +354,8 @@ public class ZaSpanStringBuilderBasicTests
         var builder = ZaSpanStringBuilder.Create(buffer);
         builder.Append("Test");
 
-        bool threwForRead = false;
-        bool threwForWrite = false;
+        var threwForRead = false;
+        var threwForWrite = false;
 
         try
         {
@@ -387,8 +385,8 @@ public class ZaSpanStringBuilderBasicTests
         Span<char> buffer = stackalloc char[100];
         var builder = ZaSpanStringBuilder.Create(buffer);
 
-        bool threwForRead = false;
-        bool threwForWrite = false;
+        var threwForRead = false;
+        var threwForWrite = false;
 
         try
         {
@@ -417,7 +415,7 @@ public class ZaSpanStringBuilderBasicTests
     {
         Span<char> buffer = stackalloc char[100];
         var builder = ZaSpanStringBuilder.Create(buffer);
-        
+
         builder.Append("Hello");
         builder[4] = '!';
         builder.Append(" World");
@@ -433,7 +431,7 @@ public class ZaSpanStringBuilderBasicTests
         var builder = ZaSpanStringBuilder.Create(buffer);
         builder.Append("abcde");
 
-        ref char c = ref builder[2];
+        ref var c = ref builder[2];
         c = 'X';
 
         Assert.Equal("abXde", builder.AsSpan());
