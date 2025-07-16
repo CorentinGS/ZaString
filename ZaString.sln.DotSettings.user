@@ -3,5 +3,6 @@
 	<s:String x:Key="/Default/Environment/UnitTesting/UnitTestSessionStore/Sessions/=f71a27dd_002D5a58_002D4372_002D81e2_002D89c3b2811c61/@EntryIndexedValue">&lt;SessionState ContinuousTestingMode="0" IsActive="True" Name="ZaSpanStringBuilderEdgeCasesTests" xmlns="urn:schemas-jetbrains-com:jetbrains-ut-session"&gt;&#xD;
   &lt;TestAncestor&gt;&#xD;
     &lt;TestId&gt;xUnit::1A73D41D-96E0-4B37-A4E9-22919CDF9853::net9.0::ZaString.Tests.ZaSpanStringBuilderEdgeCasesTests&lt;/TestId&gt;&#xD;
+    &lt;TestId&gt;xUnit::1A73D41D-96E0-4B37-A4E9-22919CDF9853::net9.0::ZaString.Tests.ZaSpanStringBuilderBasicTests&lt;/TestId&gt;&#xD;
   &lt;/TestAncestor&gt;&#xD;
 &lt;/SessionState&gt;</s:String></wpf:ResourceDictionary>

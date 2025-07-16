@@ -19,7 +19,7 @@
     </ItemGroup>
 
     <ItemGroup>
-        <ProjectReference Include="..\ZaString\ZaString.csproj"/>
+        <ProjectReference Include="..\..\src\ZaString\ZaString.csproj" />
     </ItemGroup>
 
 </Project>
