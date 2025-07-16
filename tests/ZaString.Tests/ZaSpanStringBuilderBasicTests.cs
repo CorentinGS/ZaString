@@ -437,4 +437,86 @@ public class ZaSpanStringBuilderBasicTests
         Assert.Equal("abXde", builder.AsSpan());
         Assert.Equal('X', builder[2]);
     }
+
+    [Fact]
+    public void AppendLine_Empty_AppendsNewLine()
+    {
+        Span<char> buffer = stackalloc char[100];
+        var builder = ZaSpanStringBuilder.Create(buffer);
+
+        builder.AppendLine();
+
+        Assert.Equal(Environment.NewLine, builder.AsSpan());
+        Assert.Equal(Environment.NewLine.Length, builder.Length);
+    }
+
+    [Fact]
+    public void AppendLine_String_AppendsStringWithNewLine()
+    {
+        Span<char> buffer = stackalloc char[100];
+        var builder = ZaSpanStringBuilder.Create(buffer);
+
+        builder.AppendLine("Hello");
+
+        var expected = "Hello" + Environment.NewLine;
+        Assert.Equal(expected, builder.AsSpan());
+        Assert.Equal(expected.Length, builder.Length);
+    }
+
+    [Fact]
+    public void AppendLine_NullString_AppendsOnlyNewLine()
+    {
+        Span<char> buffer = stackalloc char[100];
+        var builder = ZaSpanStringBuilder.Create(buffer);
+
+        builder.AppendLine(null);
+
+        Assert.Equal(Environment.NewLine, builder.AsSpan());
+        Assert.Equal(Environment.NewLine.Length, builder.Length);
+    }
+
+    [Fact]
+    public void AppendLine_ReadOnlySpan_AppendsSpanWithNewLine()
+    {
+        Span<char> buffer = stackalloc char[100];
+        var builder = ZaSpanStringBuilder.Create(buffer);
+        var span = "World".AsSpan();
+
+        builder.AppendLine(span);
+
+        var expected = "World" + Environment.NewLine;
+        Assert.Equal(expected, builder.AsSpan());
+        Assert.Equal(expected.Length, builder.Length);
+    }
+
+    [Fact]
+    public void AppendLine_ChainedCalls_WorksCorrectly()
+    {
+        Span<char> buffer = stackalloc char[100];
+        var builder = ZaSpanStringBuilder.Create(buffer);
+
+        builder.AppendLine("Line 1")
+            .AppendLine("Line 2")
+            .AppendLine();
+
+        var expected = "Line 1" + Environment.NewLine + "Line 2" + Environment.NewLine + Environment.NewLine;
+        Assert.Equal(expected, builder.AsSpan());
+        Assert.Equal(expected.Length, builder.Length);
+    }
+
+    [Fact]
+    public void AppendLine_MixedWithAppend_WorksCorrectly()
+    {
+        Span<char> buffer = stackalloc char[100];
+        var builder = ZaSpanStringBuilder.Create(buffer);
+
+        builder.Append("Hello ")
+            .AppendLine("World")
+            .Append("Number: ")
+            .Append(42);
+
+        var expected = "Hello World" + Environment.NewLine + "Number: 42";
+        Assert.Equal(expected, builder.AsSpan());
+        Assert.Equal(expected.Length, builder.Length);
+    }
 }

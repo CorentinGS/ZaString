@@ -78,6 +78,43 @@ public static class ZaSpanStringBuilderExtensions
     }
 
     /// <summary>
+    ///     Appends the default line terminator to the builder.
+    /// </summary>
+    /// <param name="builder">The builder instance.</param>
+    /// <returns>A reference to the builder to allow for method chaining.</returns>
+    public static ref ZaSpanStringBuilder AppendLine(ref this ZaSpanStringBuilder builder)
+    {
+        return ref builder.Append(Environment.NewLine);
+    }
+
+    /// <summary>
+    ///     Appends a string followed by the default line terminator to the builder.
+    /// </summary>
+    /// <param name="builder">The builder instance.</param>
+    /// <param name="value">The string to append. If null, only the line terminator is appended.</param>
+    /// <returns>A reference to the builder to allow for method chaining.</returns>
+    public static ref ZaSpanStringBuilder AppendLine(ref this ZaSpanStringBuilder builder, string? value)
+    {
+        if (value is not null)
+        {
+            builder.Append(value);
+        }
+        return ref builder.AppendLine();
+    }
+
+    /// <summary>
+    ///     Appends a read-only span of characters followed by the default line terminator to the builder.
+    /// </summary>
+    /// <param name="builder">The builder instance.</param>
+    /// <param name="value">The span of characters to append.</param>
+    /// <returns>A reference to the builder to allow for method chaining.</returns>
+    public static ref ZaSpanStringBuilder AppendLine(ref this ZaSpanStringBuilder builder, ReadOnlySpan<char> value)
+    {
+        builder.Append(value);
+        return ref builder.AppendLine();
+    }
+
+    /// <summary>
     ///     Throws a standardized exception for out-of-range errors.
     /// </summary>
     private static void ThrowOutOfRangeException()
