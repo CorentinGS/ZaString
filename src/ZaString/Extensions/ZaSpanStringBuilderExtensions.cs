@@ -43,6 +43,25 @@ public static class ZaSpanStringBuilderExtensions
     }
 
     /// <summary>
+    ///     Appends a single character to the builder.
+    /// </summary>
+    /// <param name="builder">The builder instance.</param>
+    /// <param name="value">The character to append.</param>
+    /// <returns>A reference to the builder to allow for method chaining.</returns>
+    /// <exception cref="ArgumentOutOfRangeException">Thrown if the buffer is too small to hold the character.</exception>
+    public static ref ZaSpanStringBuilder Append(ref this ZaSpanStringBuilder builder, char value)
+    {
+        if (builder.RemainingSpan.Length < 1)
+        {
+            ThrowOutOfRangeException();
+        }
+
+        builder.RemainingSpan[0] = value;
+        builder.Advance(1);
+        return ref builder;
+    }
+
+    /// <summary>
     ///     Appends a boolean value as "true" or "false".
     /// </summary>
     /// <param name="builder">The builder instance.</param>

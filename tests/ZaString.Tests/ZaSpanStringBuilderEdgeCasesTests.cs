@@ -173,4 +173,88 @@ public class ZaSpanStringBuilderEdgeCasesTests
 
         Assert.True(written.SequenceEqual("Testing".AsSpan()));
     }
+
+    [Fact]
+    public void Append_CharToEmptyBuffer_ThrowsImmediately()
+    {
+        var buffer = Span<char>.Empty;
+        var builder = ZaSpanStringBuilder.Create(buffer);
+
+        var exceptionThrown = false;
+        try
+        {
+            builder.Append('x');
+        }
+        catch (ArgumentOutOfRangeException)
+        {
+            exceptionThrown = true;
+        }
+
+        Assert.True(exceptionThrown);
+    }
+
+    [Fact]
+    public void Append_CharToBufferWithExactlyOneSlot_WorksCorrectly()
+    {
+        Span<char> buffer = stackalloc char[1];
+        var builder = ZaSpanStringBuilder.Create(buffer);
+
+        builder.Append('A');
+
+        Assert.Equal("A", builder.AsSpan());
+        Assert.Equal(1, builder.Length);
+        Assert.Equal(0, builder.RemainingSpan.Length);
+    }
+
+    [Theory]
+    [InlineData('A')]
+    [InlineData('z')]
+    [InlineData('0')]
+    [InlineData(' ')]
+    [InlineData('\t')]
+    [InlineData('\n')]
+    [InlineData('€')]
+    public void Append_VariousCharacters_WorksCorrectly(char character)
+    {
+        Span<char> buffer = stackalloc char[10];
+        var builder = ZaSpanStringBuilder.Create(buffer);
+
+        builder.Append(character);
+
+        Assert.Equal(character.ToString(), builder.AsSpan());
+        Assert.Equal(1, builder.Length);
+    }
+
+    [Fact]
+    public void Clear_AfterMultipleOperations_ResetsCorrectly()
+    {
+        Span<char> buffer = stackalloc char[100];
+        var builder = ZaSpanStringBuilder.Create(buffer);
+
+        builder.Append("Hello").Append(' ').Append(42).Append(true);
+        var lengthBeforeClear = builder.Length;
+        
+        builder.Clear();
+        
+        Assert.True(lengthBeforeClear > 0);
+        Assert.Equal(0, builder.Length);
+        Assert.Equal("", builder.AsSpan());
+        Assert.Equal(100, builder.RemainingSpan.Length);
+    }
+
+    [Fact]
+    public void Clear_MultipleTimes_HasNoAdditionalEffect()
+    {
+        Span<char> buffer = stackalloc char[100];
+        var builder = ZaSpanStringBuilder.Create(buffer);
+
+        builder.Append("Test");
+        builder.Clear();
+        builder.Clear();
+        builder.Clear();
+
+        Assert.Equal(0, builder.Length);
+        Assert.Equal("", builder.AsSpan());
+        Assert.Equal(100, builder.Capacity);
+    }
 }

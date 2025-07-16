@@ -91,6 +91,15 @@ public ref struct ZaSpanStringBuilder
     }
 
     /// <summary>
+    ///     Resets the builder to an empty state, allowing the buffer to be reused.
+    ///     This does not clear the underlying buffer content, only resets the write position.
+    /// </summary>
+    public void Clear()
+    {
+        Length = 0;
+    }
+
+    /// <summary>
     ///     Returns the built string as a <see cref="ReadOnlySpan{Char}" />.
     /// </summary>
     /// <returns>A read-only span representing the characters written to the buffer.</returns>
