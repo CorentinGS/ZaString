@@ -1,0 +1,29 @@
+# .github/workflows/ci.yml
+name: ci
+on:
+  push:
+    branches: [ main ]
+    tags:     [ 'v*.*.*' ]
+jobs:
+  build-test:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-dotnet@v4
+        with:
+          dotnet-version: 9.0.x
+      - run: dotnet test
+  pack:
+    if: startsWith(github.ref, 'refs/tags/')
+    needs: build-test
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-dotnet@v4
+        with:
+          dotnet-version: 9.0.x
+      - run: dotnet pack src/ZaString -c Release -o ./artifacts
+      - uses: actions/upload-artifact@v3
+        with:
+          name: nuget
+          path: artifacts/*.nupkg
