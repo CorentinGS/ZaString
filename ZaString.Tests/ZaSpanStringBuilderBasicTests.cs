@@ -23,7 +23,7 @@ public class ZaSpanStringBuilderBasicTests
 
         builder.Append("Hello");
 
-        Assert.Equal("Hello", builder.ToString());
+        Assert.Equal("Hello", builder.AsSpan());
         Assert.Equal(5, builder.Length);
     }
 
@@ -35,7 +35,7 @@ public class ZaSpanStringBuilderBasicTests
 
         builder.Append(null);
 
-        Assert.Equal("", builder.ToString());
+        Assert.Equal("", builder.AsSpan());
         Assert.Equal(0, builder.Length);
     }
 
@@ -48,7 +48,7 @@ public class ZaSpanStringBuilderBasicTests
 
         builder.Append(span);
 
-        Assert.Equal("World", builder.ToString());
+        Assert.Equal("World", builder.AsSpan());
         Assert.Equal(5, builder.Length);
     }
 
@@ -60,7 +60,7 @@ public class ZaSpanStringBuilderBasicTests
 
         builder.Append(true).Append(false);
 
-        Assert.Equal("truefalse", builder.ToString());
+        Assert.Equal("truefalse", builder.AsSpan());
         Assert.Equal(9, builder.Length);
     }
 
@@ -72,7 +72,7 @@ public class ZaSpanStringBuilderBasicTests
 
         builder.Append(42).Append(-123);
 
-        Assert.Equal("42-123", builder.ToString());
+        Assert.Equal("42-123", builder.AsSpan());
         Assert.Equal(6, builder.Length);
     }
 
@@ -84,7 +84,7 @@ public class ZaSpanStringBuilderBasicTests
 
         builder.Append(42, "X4");
 
-        Assert.Equal("002A", builder.ToString());
+        Assert.Equal("002A", builder.AsSpan());
         Assert.Equal(4, builder.Length);
     }
 
@@ -96,7 +96,7 @@ public class ZaSpanStringBuilderBasicTests
 
         builder.Append(3.14159);
 
-        Assert.Equal("3.14159", builder.ToString());
+        Assert.Equal("3.14159", builder.AsSpan());
         Assert.Equal(7, builder.Length);
     }
 
@@ -108,7 +108,7 @@ public class ZaSpanStringBuilderBasicTests
 
         builder.Append(3.14159, "F2");
 
-        Assert.Equal("3.14", builder.ToString());
+        Assert.Equal("3.14", builder.AsSpan());
         Assert.Equal(4, builder.Length);
     }
 
@@ -123,7 +123,7 @@ public class ZaSpanStringBuilderBasicTests
             .Append(" The answer is ")
             .Append(42);
 
-        Assert.Equal("Hello, World! The answer is 42", builder.ToString());
+        Assert.Equal("Hello, World! The answer is 42", builder.AsSpan());
         Assert.Equal(30, builder.Length);
     }
 
@@ -170,7 +170,7 @@ public class ZaSpanStringBuilderBasicTests
         builder.Advance(4);
 
         Assert.Equal(4, builder.Length);
-        Assert.Equal("Test", builder.ToString());
+        Assert.Equal("Test", builder.AsSpan());
     }
 
     [Fact]
@@ -181,7 +181,7 @@ public class ZaSpanStringBuilderBasicTests
 
         builder.Append("Hello");
 
-        Assert.Equal("Hello", builder.ToString());
+        Assert.Equal("Hello", builder.AsSpan());
         Assert.Equal(5, builder.Length);
         Assert.Equal(0, builder.RemainingSpan.Length);
     }
@@ -194,7 +194,7 @@ public class ZaSpanStringBuilderBasicTests
 
         builder.Append("");
 
-        Assert.Equal("", builder.ToString());
+        Assert.Equal("", builder.AsSpan());
         Assert.Equal(0, builder.Length);
     }
 
@@ -207,7 +207,7 @@ public class ZaSpanStringBuilderBasicTests
 
         builder.Append(dateTime, "yyyy-MM-dd HH:mm:ss");
 
-        Assert.Equal("2023-12-25 10:30:45", builder.ToString());
+        Assert.Equal("2023-12-25 10:30:45", builder.AsSpan());
     }
 
     [Fact]
@@ -219,7 +219,7 @@ public class ZaSpanStringBuilderBasicTests
 
         builder.Append(guid);
 
-        Assert.Equal("12345678-1234-5678-9012-123456789012", builder.ToString());
+        Assert.Equal("12345678-1234-5678-9012-123456789012", builder.AsSpan());
     }
 
     [Fact]
@@ -237,7 +237,7 @@ public class ZaSpanStringBuilderBasicTests
             .Append(", Active: ")
             .Append(true);
 
-        Assert.Equal("User: John Doe, Age: 30, Balance: $1234.56, Active: true", builder.ToString());
+        Assert.Equal("User: John Doe, Age: 30, Balance: $1234.56, Active: true", builder.AsSpan());
     }
 
     [Fact]
@@ -264,7 +264,7 @@ public class ZaSpanStringBuilderBasicTests
         builder[0] = 'J';
         builder[4] = 'y';
 
-        Assert.Equal("Jelly", builder.ToString());
+        Assert.Equal("Jelly", builder.AsSpan());
     }
 
     [Fact]
@@ -280,7 +280,7 @@ public class ZaSpanStringBuilderBasicTests
         builder[3] = 'd';
         builder[4] = 's';
 
-        Assert.Equal("words", builder.ToString());
+        Assert.Equal("words", builder.AsSpan());
     }
 
     [Fact]
@@ -421,7 +421,7 @@ public class ZaSpanStringBuilderBasicTests
         builder.Append(" World");
         builder[10] = '!';
 
-        Assert.Equal("Hell! Worl!", builder.ToString());
+        Assert.Equal("Hell! Worl!", builder.AsSpan());
     }
 
     [Fact]
@@ -434,7 +434,7 @@ public class ZaSpanStringBuilderBasicTests
         ref char c = ref builder[2];
         c = 'X';
 
-        Assert.Equal("abXde", builder.ToString());
+        Assert.Equal("abXde", builder.AsSpan());
         Assert.Equal('X', builder[2]);
     }
 }

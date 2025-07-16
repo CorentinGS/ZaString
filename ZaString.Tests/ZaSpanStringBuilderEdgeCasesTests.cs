@@ -51,7 +51,7 @@ public class ZaSpanStringBuilderEdgeCasesTests
 
         builder.Append(input);
 
-        Assert.Equal(input, builder.ToString());
+        Assert.Equal(input, builder.AsSpan());
         Assert.Equal(input.Length, builder.Length);
     }
 
@@ -68,7 +68,7 @@ public class ZaSpanStringBuilderEdgeCasesTests
 
         builder.Append(value);
 
-        Assert.Equal(value.ToString(), builder.ToString());
+        Assert.Equal(value.ToString(), builder.AsSpan());
     }
 
     [Theory]
@@ -84,7 +84,7 @@ public class ZaSpanStringBuilderEdgeCasesTests
 
         builder.Append(value);
 
-        Assert.Equal(value.ToString(), builder.ToString());
+        Assert.Equal(value.ToString(), builder.AsSpan());
     }
 
     [Theory]
@@ -101,7 +101,7 @@ public class ZaSpanStringBuilderEdgeCasesTests
 
         builder.Append(value);
 
-        Assert.Equal(value.ToString(), builder.ToString());
+        Assert.Equal(value.ToString(CultureInfo.InvariantCulture), builder.AsSpan());
     }
 
     [Theory]
@@ -118,7 +118,7 @@ public class ZaSpanStringBuilderEdgeCasesTests
 
         builder.Append(value);
 
-        Assert.Equal(value.ToString(CultureInfo.InvariantCulture), builder.ToString());
+        Assert.Equal(value.ToString(CultureInfo.InvariantCulture), builder.AsSpan());
     }
 
     [Fact]
@@ -129,7 +129,7 @@ public class ZaSpanStringBuilderEdgeCasesTests
 
         builder.Append("Hello").Append("World");
 
-        Assert.Equal("HelloWorld", builder.ToString());
+        Assert.Equal("HelloWorld", builder.AsSpan());
         Assert.Equal(10, builder.Length);
         Assert.Equal(0, builder.RemainingSpan.Length);
     }
@@ -142,7 +142,7 @@ public class ZaSpanStringBuilderEdgeCasesTests
 
         builder.Append("Hello 🌍 World! 🚀");
 
-        Assert.Equal("Hello 🌍 World! 🚀", builder.ToString());
+        Assert.Equal("Hello 🌍 World! 🚀", builder.AsSpan());
     }
 
     [Fact]
@@ -153,7 +153,7 @@ public class ZaSpanStringBuilderEdgeCasesTests
 
         builder.Append(ReadOnlySpan<char>.Empty);
 
-        Assert.Equal("", builder.ToString());
+        Assert.Equal("", builder.AsSpan());
         Assert.Equal(0, builder.Length);
     }
 
