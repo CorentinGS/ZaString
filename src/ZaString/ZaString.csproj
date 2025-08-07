@@ -7,9 +7,25 @@
         <PackageId>ZaString</PackageId>
         <Authors>Corentin Giaufer Saubert</Authors>
         <License>MIT</License>
-        <Description>ZaString is a library for zero-allocation string manipulation in C# using Span and ReadonlySpan.</Description>
-        <Version>0.1.0-rc.1</Version>
+        <Description>ZaString is a high-performance, zero-allocation string manipulation library for C# that uses Span and ReadOnlySpan for optimal memory efficiency. Built for .NET 8.0+, it provides a fluent API for building strings without heap allocations.</Description>
+        <Version>0.1.0</Version>
         <RepositoryUrl>https://github.com/CorentinGS/ZaString</RepositoryUrl>
+        <RepositoryType>git</RepositoryType>
+        <PackageTags>string;span;performance;zero-allocation;memory-efficient;string-builder</PackageTags>
+        <PackageReadmeFile>README.md</PackageReadmeFile>
+        <PackageLicenseExpression>MIT</PackageLicenseExpression>
+        <PackageRequireLicenseAcceptance>false</PackageRequireLicenseAcceptance>
+        <GeneratePackageOnBuild>false</GeneratePackageOnBuild>
+        <IncludeSymbols>true</IncludeSymbols>
+        <SymbolPackageFormat>snupkg</SymbolPackageFormat>
+        <PublishRepositoryUrl>true</PublishRepositoryUrl>
+        <EmbedUntrackedSources>true</EmbedUntrackedSources>
+        <Deterministic>true</Deterministic>
+        <ContinuousIntegrationBuild>true</ContinuousIntegrationBuild>
     </PropertyGroup>
+
+    <ItemGroup>
+        <None Include="$(MSBuildThisFileDirectory)..\..\README.md" Pack="true" PackagePath="/" />
+    </ItemGroup>
 
 </Project>
