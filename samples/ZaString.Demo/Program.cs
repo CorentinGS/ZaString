@@ -59,6 +59,9 @@ public class Program
         Utf8WriterDemo();
         Console.WriteLine();
 
+        FormatDemo();
+        Console.WriteLine();
+
         Console.WriteLine("Demo complete!");
     }
 
@@ -473,5 +476,37 @@ public class Program
         writer.Append("Hex: ").AppendHex(data, uppercase: true);
         writer.Append(", Base64: ").AppendBase64(data);
         Console.WriteLine(Encoding.UTF8.GetString(writer.AsSpan()));
+    }
+
+    private static void FormatDemo()
+    {
+        Console.WriteLine("--- Composite Formatting ---");
+
+        Span<char> buffer = stackalloc char[128];
+        var builder = ZaSpanStringBuilder.Create(buffer);
+
+        var name = "Alice";
+        var age = 30;
+        var pi = Math.PI;
+
+        // Composite formatting using AppendFormat
+        builder.AppendFormat("User: {0}, Age: {1}, Pi: {2:F2}", name, age, pi);
+        Console.WriteLine(builder.AsSpan().ToString());
+
+        // Clear and demonstrate AppendFormat with culture-specific formatting
+        builder.Clear();
+        var fr = new CultureInfo("fr-FR");
+        builder.AppendFormat(fr, "User: {0}, Age: {1}, Pi: {2:F2}", name, age, pi);
+        Console.WriteLine(builder.AsSpan().ToString());
+
+        // Clear and demonstrate AppendFormat with custom formatting
+        builder.Clear();
+        builder.AppendFormat(fr, "Currency: {0:C}", 1234.56);
+        Console.WriteLine(builder.AsSpan().ToString());
+
+        // Clear and demonstrate AppendFormat with multiple arguments
+        builder.Clear();
+        builder.AppendFormat(fr, "User: {0}, Age: {1}, Pi: {2:F2}, Currency: {3:C}", name, age, pi, 1234.56);
+        Console.WriteLine(builder.AsSpan().ToString());
     }
 }
