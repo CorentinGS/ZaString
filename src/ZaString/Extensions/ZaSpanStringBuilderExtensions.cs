@@ -856,15 +856,14 @@ public static class ZaSpanStringBuilderExtensions
             }
             else if (char.IsHighSurrogate(c) && i + 1 < value.Length && char.IsLowSurrogate(value[i + 1]))
             {
-                var high = c;
                 var low = value[++i];
-                var codePoint = 0x10000 + (high - 0xD800 << 10 | low - 0xDC00);
-                w += PercentEncodeUtf8FromCodePoint(codePoint, dest.Slice(w));
+                var codePoint = 0x10000 + (c - 0xD800 << 10 | low - 0xDC00);
+                w += PercentEncodeUtf8FromCodePoint(codePoint, dest[w..]);
             }
             else
             {
                 var codePoint = (int)c;
-                w += PercentEncodeUtf8FromCodePoint(codePoint, dest.Slice(w));
+                w += PercentEncodeUtf8FromCodePoint(codePoint, dest[w..]);
             }
         }
 
