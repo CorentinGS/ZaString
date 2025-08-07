@@ -1,5 +1,6 @@
 ﻿using System.Diagnostics;
 using System.Text;
+using System.Globalization;
 using ZaString.Core;
 using ZaString.Extensions;
 
@@ -37,7 +38,65 @@ public class Program
         CharacterModificationDemo();
         Console.WriteLine();
 
+        TryAppendDemo();
+        Console.WriteLine();
+
+        AppendHelpersDemo();
+        Console.WriteLine();
+
         Console.WriteLine("Demo complete!");
+    }
+
+    private static void TryAppendDemo()
+    {
+        Console.WriteLine("--- TryAppend ---");
+
+        // Small buffer: demonstrate non-throwing false return
+        Span<char> small = stackalloc char[3];
+        var builder = ZaSpanStringBuilder.Create(small);
+        var ok = builder.TryAppend("Hello");
+        Console.WriteLine($"TryAppend(\"Hello\") ok: {ok}, Length: {builder.Length}");
+        ok = builder.TryAppend('A');
+        Console.WriteLine($"TryAppend('A') ok: {ok}, Text: '{builder.AsSpan()}'");
+
+        // Sufficient buffer: show newline and culture-safe formatting
+        Span<char> buffer = stackalloc char[32];
+        builder = ZaSpanStringBuilder.Create(buffer);
+        builder.TryAppend("Hi");
+        builder.TryAppend(' ');
+        builder.TryAppendLine();
+        builder.TryAppend(1.5); // uses InvariantCulture by default => "1.5"
+        Console.WriteLine($"With newline + double (invariant): '{builder.AsSpan()}'");
+
+        // Custom provider formatting via TryAppend<T>
+        Span<char> bufferFr = stackalloc char[16];
+        var fr = new CultureInfo("fr-FR");
+        builder = ZaSpanStringBuilder.Create(bufferFr);
+        builder.TryAppend(1.5, provider: fr);
+        Console.WriteLine($"Double with fr-FR: '{builder.AsSpan()}'");
+    }
+
+    private static void AppendHelpersDemo()
+    {
+        Console.WriteLine("--- Append Helpers (Repeat/Join) ---");
+
+        Span<char> buffer = stackalloc char[128];
+        var builder = ZaSpanStringBuilder.Create(buffer);
+
+        // AppendRepeat and TryAppendRepeat
+        builder.AppendRepeat('-', 10).AppendLine();
+        var repeatedOk = builder.TryAppendRepeat('*', 5);
+        builder.AppendLine();
+        Console.WriteLine($"Repeat appended ok: {repeatedOk}");
+
+        // AppendJoin with strings (null treated as empty)
+        builder.AppendJoin(", ".AsSpan(), "a", null, "c").AppendLine();
+
+        // AppendJoin with ISpanFormattable values and culture
+        var values = new double[] { 1.5, 2.5, 3.5 };
+        builder.AppendJoin<double>("; ".AsSpan(), values, provider: new CultureInfo("fr-FR"));
+
+        Console.WriteLine(builder.AsSpan().ToString());
     }
 
     private static void BasicUsageDemo()
