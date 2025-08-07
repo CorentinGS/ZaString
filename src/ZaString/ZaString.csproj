@@ -1,14 +1,14 @@
 ﻿<Project Sdk="Microsoft.NET.Sdk">
 
     <PropertyGroup>
-        <TargetFramework>net9.0</TargetFramework>
+        <TargetFramework>net8.0</TargetFramework>
         <ImplicitUsings>enable</ImplicitUsings>
         <Nullable>enable</Nullable>
         <PackageId>ZaString</PackageId>
         <Authors>Corentin Giaufer Saubert</Authors>
         <License>MIT</License>
         <Description>ZaString is a library for zero-allocation string manipulation in C# using Span and ReadonlySpan.</Description>
-        <Version>0.1.0-rc</Version>
+        <Version>0.1.0-rc.1</Version>
         <RepositoryUrl>https://github.com/CorentinGS/ZaString</RepositoryUrl>
     </PropertyGroup>
 
