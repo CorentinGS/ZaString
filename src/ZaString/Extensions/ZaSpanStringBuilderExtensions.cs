@@ -1,4 +1,5 @@
 using System.Globalization;
+using System.Runtime.CompilerServices;
 using ZaString.Core;
 
 namespace ZaString.Extensions;
@@ -8,6 +9,26 @@ namespace ZaString.Extensions;
 /// </summary>
 public static class ZaSpanStringBuilderExtensions
 {
+        /// <summary>
+        ///     Appends an interpolated string using a custom handler that writes directly into the builder.
+        /// </summary>
+        public static ref ZaSpanStringBuilder Append(ref this ZaSpanStringBuilder builder,
+            [InterpolatedStringHandlerArgument("builder")] ZaInterpolatedStringHandler handler)
+        {
+            builder = handler.GetResult();
+            return ref builder;
+        }
+
+        /// <summary>
+        ///     Appends an interpolated string followed by the default line terminator.
+        /// </summary>
+        public static ref ZaSpanStringBuilder AppendLine(ref this ZaSpanStringBuilder builder,
+            [InterpolatedStringHandlerArgument("builder")] ZaInterpolatedStringHandler handler)
+        {
+            builder = handler.GetResult();
+            return ref builder.AppendLine();
+        }
+
         /// <summary>
         ///     Attempts to reserve a writable span of the specified size without throwing.
         ///     On success, caller must write up to <paramref name="size"/> characters and then call <see cref="ZaSpanStringBuilder.Advance(int)"/> with the actual number written.

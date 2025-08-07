@@ -44,6 +44,9 @@ public class Program
         AppendHelpersDemo();
         Console.WriteLine();
 
+        InterpolationDemo();
+        Console.WriteLine();
+
         Console.WriteLine("Demo complete!");
     }
 
@@ -96,6 +99,25 @@ public class Program
         var values = new double[] { 1.5, 2.5, 3.5 };
         builder.AppendJoin<double>("; ".AsSpan(), values, provider: new CultureInfo("fr-FR"));
 
+        Console.WriteLine(builder.AsSpan().ToString());
+    }
+
+    private static void InterpolationDemo()
+    {
+        Console.WriteLine("--- Interpolated String Handler ---");
+
+        Span<char> buffer = stackalloc char[128];
+        var builder = ZaSpanStringBuilder.Create(buffer);
+
+        var name = "Alice";
+        var age = 30;
+        var pi = Math.PI;
+
+        builder.Append($"User: {name}, Age: {age}, Pi: {pi:F2}");
+        Console.WriteLine(builder.AsSpan().ToString());
+
+        builder.Clear();
+        builder.AppendLine($"Line: {42}");
         Console.WriteLine(builder.AsSpan().ToString());
     }
 
