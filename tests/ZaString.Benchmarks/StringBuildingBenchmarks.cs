@@ -1,4 +1,5 @@
 using System;
+using System.Globalization;
 using System.Text;
 using BenchmarkDotNet.Attributes;
 using ZaString.Core;
@@ -236,9 +237,9 @@ public class NumberFormattingBenchmarks
     }
 
     [Benchmark]
-    public string ToString_Double()
+    public static string ToString_Double()
     {
-        return TestDouble.ToString();
+        return TestDouble.ToString(CultureInfo.InvariantCulture);
     }
 
     [Benchmark]
@@ -252,9 +253,9 @@ public class NumberFormattingBenchmarks
     }
 
     [Benchmark]
-    public string ToString_Float()
+    public static string ToString_Float()
     {
-        return TestFloat.ToString();
+        return TestFloat.ToString(CultureInfo.InvariantCulture);
     }
 
     [Benchmark]
