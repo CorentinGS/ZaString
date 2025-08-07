@@ -56,6 +56,9 @@ public class Program
         PooledBuilderDemo();
         Console.WriteLine();
 
+        Utf8WriterDemo();
+        Console.WriteLine();
+
         Console.WriteLine("Demo complete!");
     }
 
@@ -443,5 +446,32 @@ public class Program
         {
             Console.WriteLine("✓ IndexOutOfRangeException caught for negative index");
         }
+    }
+
+    private static void Utf8WriterDemo()
+    {
+        Console.WriteLine("--- UTF-8 Writer Demo ---");
+
+        // Create a buffer for UTF-8 bytes
+        Span<byte> utf8Buffer = stackalloc byte[1024];
+        var writer = ZaUtf8SpanWriter.Create(utf8Buffer);
+
+        // Write some text
+        writer.Append("Hello, ");
+        writer.Append("World!");
+        writer.Append(" This is a test of ");
+        writer.Append(123);
+        writer.Append(" bytes.");
+
+        // Access the written bytes
+        Console.WriteLine($"Written UTF-8 bytes: {writer.Length}");
+        Console.WriteLine(Encoding.UTF8.GetString(writer.AsSpan()));
+
+        // Demonstrate hex and base64
+        writer.Clear();
+        var data = new byte[] { 0x01, 0x02, 0x03, 0x04 };
+        writer.Append("Hex: ").AppendHex(data, uppercase: true);
+        writer.Append(", Base64: ").AppendBase64(data);
+        Console.WriteLine(Encoding.UTF8.GetString(writer.AsSpan()));
     }
 }
