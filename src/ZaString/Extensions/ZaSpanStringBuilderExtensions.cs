@@ -815,7 +815,7 @@ public static class ZaSpanStringBuilderExtensions
 
     private static bool IsUnreservedAscii(char c)
     {
-        return c is >= 'A' and <= 'Z' or >= 'a' and <= 'z' or < '0' or > '9' or '-' or '_' or '.' or '~';
+        return c is >= 'A' and <= 'Z' or >= 'a' and <= 'z' or >= '0' and <= '9' or '-' or '_' or '.' or '~';
     }
 
     public static ref ZaSpanStringBuilder AppendUrlEncoded(ref this ZaSpanStringBuilder builder, ReadOnlySpan<char> value)
