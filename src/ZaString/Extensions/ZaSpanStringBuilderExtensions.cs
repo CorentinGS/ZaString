@@ -903,4 +903,15 @@ public static class ZaSpanStringBuilderExtensions
 
             return ref builder;
         }
+
+    public static ref ZaSpanStringBuilder AppendFormat(ref this ZaSpanStringBuilder builder, string format, params object?[] args)
+    {
+        return ref builder.AppendFormat(CultureInfo.InvariantCulture, format, args);
+    }
+
+    public static ref ZaSpanStringBuilder AppendFormat(ref this ZaSpanStringBuilder builder, IFormatProvider? formatProvider, string format, params object?[] args)
+    {
+        var formatted = string.Format(formatProvider, format, args);
+        return ref builder.Append(formatted.AsSpan());
+    }
 }
