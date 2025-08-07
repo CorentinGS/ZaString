@@ -1,6 +1,7 @@
 using System.Globalization;
 using System.Runtime.CompilerServices;
 using ZaString.Core;
+using System.Text;
 
 namespace ZaString.Extensions;
 
@@ -737,5 +738,169 @@ public static class ZaSpanStringBuilderExtensions
                 if (c == ',' || c == '"' || c == '\n' || c == '\r') return true;
             }
             return false;
+        }
+
+        // URL encoding and composition helpers
+
+        private static bool IsUnreservedAscii(char c)
+        {
+            return (c >= 'A' && c <= 'Z') ||
+                   (c >= 'a' && c <= 'z') ||
+                   (c >= '0' && c <= '9') ||
+                   c is '-' or '_' or '.' or '~';
+        }
+
+        public static ref ZaSpanStringBuilder AppendUrlEncoded(ref this ZaSpanStringBuilder builder, ReadOnlySpan<char> value)
+        {
+            if (!TryAppendUrlEncoded(ref builder, value))
+            {
+                ThrowOutOfRangeException();
+            }
+            return ref builder;
+        }
+
+        public static bool TryAppendUrlEncoded(ref this ZaSpanStringBuilder builder, ReadOnlySpan<char> value)
+        {
+            var required = GetUrlEncodedLength(value);
+            if (required > builder.RemainingSpan.Length)
+            {
+                return false;
+            }
+
+            var dest = builder.RemainingSpan;
+            var w = 0;
+            for (int i = 0; i < value.Length; i++)
+            {
+                var c = value[i];
+                if (c <= 0x7F)
+                {
+                    if (IsUnreservedAscii(c))
+                    {
+                        dest[w++] = c;
+                    }
+                    else
+                    {
+                        dest[w++] = '%';
+                        WriteHexByte((byte)c, dest.Slice(w, 2));
+                        w += 2;
+                    }
+                }
+                else if (char.IsHighSurrogate(c) && i + 1 < value.Length && char.IsLowSurrogate(value[i + 1]))
+                {
+                    var high = c;
+                    var low = value[++i];
+                    var codePoint = 0x10000 + (((high - 0xD800) << 10) | (low - 0xDC00));
+                    w += PercentEncodeUtf8FromCodePoint(codePoint, dest.Slice(w));
+                }
+                else
+                {
+                    var codePoint = (int)c;
+                    w += PercentEncodeUtf8FromCodePoint(codePoint, dest.Slice(w));
+                }
+            }
+
+            builder.Advance(required);
+            return true;
+        }
+
+        private static int GetUrlEncodedLength(ReadOnlySpan<char> value)
+        {
+            var length = 0;
+            for (int i = 0; i < value.Length; i++)
+            {
+                var c = value[i];
+                if (c <= 0x7F)
+                {
+                    length += IsUnreservedAscii(c) ? 1 : 3;
+                }
+                else if (char.IsHighSurrogate(c) && i + 1 < value.Length && char.IsLowSurrogate(value[i + 1]))
+                {
+                    length += 4 * 3; // 4 UTF-8 bytes -> %HH %HH %HH %HH
+                    i++; // consume low surrogate
+                }
+                else
+                {
+                    // Non-surrogate BMP char: 0x80..0x7FF => 2 bytes; 0x800..0xFFFF => 3 bytes
+                    length += (c <= 0x7FF) ? 2 * 3 : 3 * 3;
+                }
+            }
+            return length;
+        }
+
+        private static int PercentEncodeUtf8FromCodePoint(int codePoint, Span<char> dest)
+        {
+            // Returns number of chars written to dest (multiple of 3)
+            if (codePoint <= 0x7F)
+            {
+                dest[0] = '%';
+                WriteHexByte((byte)codePoint, dest.Slice(1, 2));
+                return 3;
+            }
+            if (codePoint <= 0x7FF)
+            {
+                var b1 = (byte)(0b1100_0000 | (codePoint >> 6));
+                var b2 = (byte)(0b1000_0000 | (codePoint & 0b0011_1111));
+                dest[0] = '%'; WriteHexByte(b1, dest.Slice(1, 2));
+                dest[3] = '%'; WriteHexByte(b2, dest.Slice(4, 2));
+                return 6;
+            }
+            if (codePoint <= 0xFFFF)
+            {
+                var b1 = (byte)(0b1110_0000 | (codePoint >> 12));
+                var b2 = (byte)(0b1000_0000 | ((codePoint >> 6) & 0b0011_1111));
+                var b3 = (byte)(0b1000_0000 | (codePoint & 0b0011_1111));
+                dest[0] = '%'; WriteHexByte(b1, dest.Slice(1, 2));
+                dest[3] = '%'; WriteHexByte(b2, dest.Slice(4, 2));
+                dest[6] = '%'; WriteHexByte(b3, dest.Slice(7, 2));
+                return 9;
+            }
+            else
+            {
+                var b1 = (byte)(0b1111_0000 | (codePoint >> 18));
+                var b2 = (byte)(0b1000_0000 | ((codePoint >> 12) & 0b0011_1111));
+                var b3 = (byte)(0b1000_0000 | ((codePoint >> 6) & 0b0011_1111));
+                var b4 = (byte)(0b1000_0000 | (codePoint & 0b0011_1111));
+                dest[0] = '%'; WriteHexByte(b1, dest.Slice(1, 2));
+                dest[3] = '%'; WriteHexByte(b2, dest.Slice(4, 2));
+                dest[6] = '%'; WriteHexByte(b3, dest.Slice(7, 2));
+                dest[9] = '%'; WriteHexByte(b4, dest.Slice(10, 2));
+                return 12;
+            }
+        }
+
+        public static ref ZaSpanStringBuilder AppendPathSegment(ref this ZaSpanStringBuilder builder, ReadOnlySpan<char> segment, char separator = '/')
+        {
+            if (builder.Length > 0 && builder[builder.Length - 1] != separator)
+            {
+                builder.Append(separator);
+            }
+
+            // Trim leading separators in segment
+            int start = 0;
+            while (start < segment.Length && segment[start] == separator) start++;
+            if (start < segment.Length)
+            {
+                builder.Append(segment[start..]);
+            }
+            return ref builder;
+        }
+
+        public static ref ZaSpanStringBuilder AppendQueryParam(ref this ZaSpanStringBuilder builder, ReadOnlySpan<char> key, ReadOnlySpan<char> value, bool urlEncode = true, bool isFirst = false)
+        {
+            builder.Append(isFirst ? '?' : '&');
+            if (urlEncode)
+            {
+                builder.AppendUrlEncoded(key);
+                builder.Append('=');
+                builder.AppendUrlEncoded(value);
+            }
+            else
+            {
+                builder.Append(key);
+                builder.Append('=');
+                builder.Append(value);
+            }
+
+            return ref builder;
         }
 }
