@@ -14,7 +14,7 @@ public ref struct ZaSpanStringBuilder
     /// <summary>
     ///     Gets the portion of the buffer that has been written to.
     /// </summary>
-    public ReadOnlySpan<char> WrittenSpan
+    public readonly ReadOnlySpan<char> WrittenSpan
     {
         get => _buffer[..Length];
     }
@@ -22,7 +22,7 @@ public ref struct ZaSpanStringBuilder
     /// <summary>
     ///     Gets the remaining, unused portion of the buffer.
     /// </summary>
-    public Span<char> RemainingSpan
+    public readonly Span<char> RemainingSpan
     {
         get => _buffer[Length..];
     }
@@ -35,7 +35,7 @@ public ref struct ZaSpanStringBuilder
     /// <summary>
     ///     Gets the total capacity of the underlying buffer.
     /// </summary>
-    public int Capacity
+    public readonly int Capacity
     {
         get => _buffer.Length;
     }
@@ -50,7 +50,7 @@ public ref struct ZaSpanStringBuilder
     ///     Thrown when the index is negative or greater than or equal to the current
     ///     length.
     /// </exception>
-    public ref char this[int index]
+    public readonly ref char this[int index]
     {
         get
         {
@@ -103,7 +103,7 @@ public ref struct ZaSpanStringBuilder
     ///     Returns the built string as a <see cref="ReadOnlySpan{Char}" />.
     /// </summary>
     /// <returns>A read-only span representing the characters written to the buffer.</returns>
-    public ReadOnlySpan<char> AsSpan()
+    public readonly ReadOnlySpan<char> AsSpan()
     {
         return WrittenSpan;
     }
@@ -113,7 +113,7 @@ public ref struct ZaSpanStringBuilder
     ///     Note: This method allocates a new string.
     /// </summary>
     /// <returns>A new string containing the characters written to the buffer.</returns>
-    public override string ToString()
+    public override readonly string ToString()
     {
         return new string(WrittenSpan);
     }
