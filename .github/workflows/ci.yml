@@ -22,7 +22,7 @@ jobs:
         uses: actions/setup-dotnet@v4
         with:
           dotnet-version: ${{ env.dotnet }}
-
+      - run: dotnet restore src/ZaString
       - run: mkdir -p artifacts
       - run: dotnet pack src/ZaString --configuration Release --output artifacts --no-build
 
