@@ -1,3 +1,4 @@
+using System.Globalization;
 using ZaString.Core;
 
 namespace ZaString.Extensions;
@@ -85,10 +86,26 @@ public static class ZaSpanStringBuilderExtensions
     /// <exception cref="FormatException">Thrown if the value cannot be formatted correctly.</exception>
     public static ref ZaSpanStringBuilder Append<T>(ref this ZaSpanStringBuilder builder, T value, ReadOnlySpan<char> format = default) where T : ISpanFormattable
     {
-        if (!value.TryFormat(builder.RemainingSpan, out var charsWritten, format, null))
+        return ref builder.Append(value, format, CultureInfo.InvariantCulture);
+    }
+
+    /// <summary>
+    ///     Appends a value of a type that implements <see cref="ISpanFormattable" /> using the specified format provider.
+    /// </summary>
+    /// <typeparam name="T">The type of the value, which must implement ISpanFormattable.</typeparam>
+    /// <param name="builder">The builder instance.</param>
+    /// <param name="value">The value to format and append.</param>
+    /// <param name="format">An optional format string for the value.</param>
+    /// <param name="provider">Format provider to use. If null, <see cref="CultureInfo.InvariantCulture"/> is used.</param>
+    /// <returns>A reference to the builder to allow for method chaining.</returns>
+    /// <exception cref="ArgumentOutOfRangeException">Thrown if the buffer is too small to hold the formatted value.</exception>
+    /// <exception cref="FormatException">Thrown if the value cannot be formatted correctly.</exception>
+    public static ref ZaSpanStringBuilder Append<T>(ref this ZaSpanStringBuilder builder, T value, ReadOnlySpan<char> format, IFormatProvider? provider) where T : ISpanFormattable
+    {
+        provider ??= CultureInfo.InvariantCulture;
+
+        if (!value.TryFormat(builder.RemainingSpan, out var charsWritten, format, provider))
         {
-            // This can mean two things: buffer is too small, or format is invalid.
-            // We throw for "out of range" as it's the most common and actionable reason.
             ThrowOutOfRangeException();
         }
 
