@@ -237,7 +237,7 @@ public class NumberFormattingBenchmarks
     }
 
     [Benchmark]
-    public static string ToString_Double()
+    public string ToString_Double()
     {
         return TestDouble.ToString(CultureInfo.InvariantCulture);
     }
@@ -253,7 +253,7 @@ public class NumberFormattingBenchmarks
     }
 
     [Benchmark]
-    public static string ToString_Float()
+    public string ToString_Float()
     {
         return TestFloat.ToString(CultureInfo.InvariantCulture);
     }
