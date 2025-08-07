@@ -53,6 +53,9 @@ public class Program
         UrlHelpersDemo();
         Console.WriteLine();
 
+        PooledBuilderDemo();
+        Console.WriteLine();
+
         Console.WriteLine("Demo complete!");
     }
 
@@ -173,6 +176,16 @@ public class Program
         builder.AppendQueryParam("tag", "c#");
 
         Console.WriteLine(builder.AsSpan().ToString()); // api/v1/users?q=a%20b&tag=c%23
+    }
+
+    private static void PooledBuilderDemo()
+    {
+        Console.WriteLine("--- Pooled Builder ---");
+
+        using var b = ZaPooledStringBuilder.Rent(initialCapacity: 8);
+        b.Append("Hello").Append(", ").Append("World!").Append(' ').Append(123);
+        Console.WriteLine(b.AsSpan().ToString());
+        Console.WriteLine(b.ToString());
     }
 
     private static void BasicUsageDemo()
