@@ -47,6 +47,9 @@ public class Program
         InterpolationDemo();
         Console.WriteLine();
 
+        JsonEscapingDemo();
+        Console.WriteLine();
+
         Console.WriteLine("Demo complete!");
     }
 
@@ -119,6 +122,39 @@ public class Program
         builder.Clear();
         builder.AppendLine($"Line: {42}");
         Console.WriteLine(builder.AsSpan().ToString());
+    }
+
+    private static void JsonEscapingDemo()
+    {
+        Console.WriteLine("--- JSON Escaping ---");
+
+        // Build a small JSON object with escaped string values
+        Span<char> buffer = stackalloc char[256];
+        var builder = ZaSpanStringBuilder.Create(buffer);
+
+        var name = "Alice \"A\"\n\t";
+        var message = "Line1\r\nLine2\t\"Quote\"";
+
+        builder.Append('{')
+               .Append("\"name\":\"")
+               .AppendJsonEscaped(name)
+               .Append("\",\"message\":\"")
+               .AppendJsonEscaped(message)
+               .Append("\"}");
+
+        Console.WriteLine(builder.AsSpan().ToString());
+
+        // Demonstrate non-throwing variant
+        Span<char> tiny = stackalloc char[10];
+        var b2 = ZaSpanStringBuilder.Create(tiny);
+        var ok = b2.TryAppendJsonEscaped(message);
+        Console.WriteLine($"TryAppendJsonEscaped ok={ok}, len={b2.Length}");
+
+        // Success case: allocate a conservatively sized buffer and retry
+        Span<char> big = stackalloc char[message.Length * 6]; // safe upper-bound for escaping
+        var b3 = ZaSpanStringBuilder.Create(big);
+        var ok2 = b3.TryAppendJsonEscaped(message);
+        Console.WriteLine($"TryAppendJsonEscaped ok={ok2}, value='{b3.AsSpan().ToString()}'");
     }
 
     private static void BasicUsageDemo()

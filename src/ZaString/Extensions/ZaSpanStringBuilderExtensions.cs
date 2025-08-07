@@ -535,4 +535,207 @@ public static class ZaSpanStringBuilderExtensions
     {
         throw new ArgumentOutOfRangeException("value", "The destination buffer is too small.");
     }
+
+        // Escaping helpers
+
+        public static ref ZaSpanStringBuilder AppendJsonEscaped(ref this ZaSpanStringBuilder builder, ReadOnlySpan<char> value)
+        {
+            if (!TryAppendJsonEscaped(ref builder, value))
+            {
+                ThrowOutOfRangeException();
+            }
+            return ref builder;
+        }
+
+        public static bool TryAppendJsonEscaped(ref this ZaSpanStringBuilder builder, ReadOnlySpan<char> value)
+        {
+            var required = GetJsonEscapedLength(value);
+            if (required > builder.RemainingSpan.Length)
+            {
+                return false;
+            }
+            if (required == value.Length)
+            {
+                value.CopyTo(builder.RemainingSpan);
+                builder.Advance(value.Length);
+                return true;
+            }
+            var dest = builder.RemainingSpan;
+            var w = 0;
+            for (var i = 0; i < value.Length; i++)
+            {
+                var c = value[i];
+                switch (c)
+                {
+                    case '"': dest[w++] = '\\'; dest[w++] = '"'; break;
+                    case '\\': dest[w++] = '\\'; dest[w++] = '\\'; break;
+                    case '\b': dest[w++] = '\\'; dest[w++] = 'b'; break;
+                    case '\f': dest[w++] = '\\'; dest[w++] = 'f'; break;
+                    case '\n': dest[w++] = '\\'; dest[w++] = 'n'; break;
+                    case '\r': dest[w++] = '\\'; dest[w++] = 'r'; break;
+                    case '\t': dest[w++] = '\\'; dest[w++] = 't'; break;
+                    default:
+                        if (c < ' ')
+                        {
+                            dest[w++] = '\\';
+                            dest[w++] = 'u';
+                            dest[w++] = '0';
+                            dest[w++] = '0';
+                            WriteHexByte((byte)c, dest.Slice(w, 2));
+                            w += 2;
+                        }
+                        else
+                        {
+                            dest[w++] = c;
+                        }
+                        break;
+                }
+            }
+            builder.Advance(required);
+            return true;
+        }
+
+        private static int GetJsonEscapedLength(ReadOnlySpan<char> value)
+        {
+            var extra = 0;
+            for (var i = 0; i < value.Length; i++)
+            {
+                var c = value[i];
+                switch (c)
+                {
+                    case '"':
+                    case '\\':
+                    case '\b':
+                    case '\f':
+                    case '\n':
+                    case '\r':
+                    case '\t':
+                        extra += 1; // becomes two chars instead of one
+                        break;
+                    default:
+                        if (c < ' ')
+                        {
+                            extra += 5; // \u00XX adds 5 extra over the original 1
+                        }
+                        break;
+                }
+            }
+            return value.Length + extra;
+        }
+
+        private static void WriteHexByte(byte b, Span<char> dest)
+        {
+            const string hex = "0123456789ABCDEF";
+            dest[0] = hex[(b >> 4) & 0xF];
+            dest[1] = hex[b & 0xF];
+        }
+
+        public static ref ZaSpanStringBuilder AppendHtmlEscaped(ref this ZaSpanStringBuilder builder, ReadOnlySpan<char> value)
+        {
+            if (!TryAppendHtmlEscaped(ref builder, value))
+            {
+                ThrowOutOfRangeException();
+            }
+            return ref builder;
+        }
+
+        public static bool TryAppendHtmlEscaped(ref this ZaSpanStringBuilder builder, ReadOnlySpan<char> value)
+        {
+            var required = GetHtmlEscapedLength(value);
+            if (required > builder.RemainingSpan.Length)
+            {
+                return false;
+            }
+            if (required == value.Length)
+            {
+                value.CopyTo(builder.RemainingSpan);
+                builder.Advance(value.Length);
+                return true;
+            }
+            var dest = builder.RemainingSpan;
+            var w = 0;
+            for (var i = 0; i < value.Length; i++)
+            {
+                switch (value[i])
+                {
+                    case '&': dest[w++] = '&'; dest[w++] = 'a'; dest[w++] = 'm'; dest[w++] = 'p'; dest[w++] = ';'; break; // &amp;
+                    case '<': dest[w++] = '&'; dest[w++] = 'l'; dest[w++] = 't'; dest[w++] = ';'; break; // &lt;
+                    case '>': dest[w++] = '&'; dest[w++] = 'g'; dest[w++] = 't'; dest[w++] = ';'; break; // &gt;
+                    case '"': dest[w++] = '&'; dest[w++] = 'q'; dest[w++] = 'u'; dest[w++] = 'o'; dest[w++] = 't'; dest[w++] = ';'; break; // &quot;
+                    case '\'': dest[w++] = '&'; dest[w++] = '#'; dest[w++] = '3'; dest[w++] = '9'; dest[w++] = ';'; break; // &#39;
+                    default: dest[w++] = value[i]; break;
+                }
+            }
+            builder.Advance(required);
+            return true;
+        }
+
+        private static int GetHtmlEscapedLength(ReadOnlySpan<char> value)
+        {
+            var extra = 0;
+            for (var i = 0; i < value.Length; i++)
+            {
+                switch (value[i])
+                {
+                    case '&': extra += 4; break; // &amp; (5) - 1 original = +4
+                    case '<':
+                    case '>': extra += 3; break; // &lt; or &gt; (4) -1 = +3
+                    case '"': extra += 5; break; // &quot; (6) -1 = +5
+                    case '\'': extra += 4; break; // &#39; (5) -1 = +4
+                }
+            }
+            return value.Length + extra;
+        }
+
+        public static ref ZaSpanStringBuilder AppendCsvEscaped(ref this ZaSpanStringBuilder builder, ReadOnlySpan<char> value)
+        {
+            if (!TryAppendCsvEscaped(ref builder, value))
+            {
+                ThrowOutOfRangeException();
+            }
+            return ref builder;
+        }
+
+        public static bool TryAppendCsvEscaped(ref this ZaSpanStringBuilder builder, ReadOnlySpan<char> value)
+        {
+            var needsQuote = NeedsCsvQuoting(value);
+            if (!needsQuote)
+            {
+                return builder.TryAppend(value);
+            }
+            var quoteCount = 0;
+            for (var i = 0; i < value.Length; i++) if (value[i] == '"') quoteCount++;
+            var required = value.Length + quoteCount + 2;
+            if (required > builder.RemainingSpan.Length)
+            {
+                return false;
+            }
+            var dest = builder.RemainingSpan;
+            var w = 0;
+            dest[w++] = '"';
+            for (var i = 0; i < value.Length; i++)
+            {
+                var c = value[i];
+                dest[w++] = c;
+                if (c == '"')
+                {
+                    dest[w++] = '"';
+                }
+            }
+            dest[w++] = '"';
+            builder.Advance(required);
+            return true;
+        }
+
+        private static bool NeedsCsvQuoting(ReadOnlySpan<char> value)
+        {
+            if (value.Length == 0) return false;
+            if (char.IsWhiteSpace(value[0]) || char.IsWhiteSpace(value[^1])) return true;
+            for (var i = 0; i < value.Length; i++)
+            {
+                var c = value[i];
+                if (c == ',' || c == '"' || c == '\n' || c == '\r') return true;
+            }
+            return false;
+        }
 }
