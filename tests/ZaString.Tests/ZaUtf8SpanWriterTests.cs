@@ -60,8 +60,13 @@ public class ZaUtf8SpanWriterTests
         Span<byte> buffer = stackalloc byte[16];
         var writer = ZaUtf8SpanWriter.Create(buffer);
 
-        var data = new byte[] { 0xAB, 0xCD, 0xEF };
-        writer.AppendHex(data, uppercase: true);
+        var data = new byte[]
+        {
+            0xAB,
+            0xCD,
+            0xEF
+        };
+        writer.AppendHex(data, true);
 
         var expected = Encoding.UTF8.GetBytes("ABCDEF");
         Assert.True(writer.AsSpan().SequenceEqual(expected));
@@ -73,11 +78,16 @@ public class ZaUtf8SpanWriterTests
         Span<byte> buffer = stackalloc byte[32];
         var writer = ZaUtf8SpanWriter.Create(buffer);
 
-        var data = new byte[] { 0x01, 0x02, 0x03 };
+        var data = new byte[]
+        {
+            0x01,
+            0x02,
+            0x03
+        };
         writer.AppendBase64(data);
 
         var expected = Convert.ToBase64String(data);
         var expectedBytes = Encoding.UTF8.GetBytes(expected);
         Assert.True(writer.AsSpan().SequenceEqual(expectedBytes));
     }
-} 
+}

@@ -49,4 +49,3 @@ public class ZaSpanStringBuilderEscapingTests
         Assert.Equal("\" a,\"\"b\"\"\n\"", builder.AsSpan());
     }
 }
-

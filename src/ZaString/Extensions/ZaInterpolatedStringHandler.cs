@@ -52,6 +52,8 @@ public ref struct ZaInterpolatedStringHandler
         _builder.Append(value, format, _provider);
     }
 
-    public ZaSpanStringBuilder GetResult() => _builder;
+    public ZaSpanStringBuilder GetResult()
+    {
+        return _builder;
+    }
 }
-

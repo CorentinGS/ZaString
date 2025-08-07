@@ -607,7 +607,7 @@ public class ZaSpanStringBuilderBasicTests
 
         builder.Append("Test");
         var originalCapacity = builder.Capacity;
-        
+
         builder.Clear();
 
         Assert.Equal(originalCapacity, builder.Capacity);

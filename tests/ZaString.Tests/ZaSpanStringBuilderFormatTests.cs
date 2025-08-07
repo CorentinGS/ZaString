@@ -54,4 +54,4 @@ public class ZaSpanStringBuilderFormatTests
         var expected = string.Format("Int: {0:N0}, Double: {1:F2}", 123, 456.789);
         Assert.Equal(expected, builder.AsSpan().ToString());
     }
-} 
+}

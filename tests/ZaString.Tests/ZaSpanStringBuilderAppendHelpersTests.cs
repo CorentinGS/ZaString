@@ -73,10 +73,13 @@ public class ZaSpanStringBuilderAppendHelpersTests
         Span<char> buffer = stackalloc char[20];
         var builder = ZaSpanStringBuilder.Create(buffer);
 
-        var values = new[] { 1.5, 2.5 };
+        var values = new[]
+        {
+            1.5,
+            2.5
+        };
         builder.AppendJoin<double>("; ".AsSpan(), values, provider: fr);
 
         Assert.Equal("1,5; 2,5", builder.AsSpan());
     }
 }
-
