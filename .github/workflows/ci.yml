@@ -1,44 +1,44 @@
 # .github/workflows/ci.yml
-name: ci
+name: Publish NuGet
+
 on:
   push:
-    tags:     [ '*.*.*' ]
-    
+    tags: [ 'v*.*.*' ]   # push when you create v1.2.3 tag
+    branches: [ main ]   # or build every commit
+  workflow_dispatch:     # manual button
+
 jobs:
-  build-test:
+  build-pack-push:
     runs-on: ubuntu-latest
-    steps:
-      - uses: actions/checkout@v4
-      - uses: actions/setup-dotnet@v4
-        with:
-          dotnet-version: 8.0.x
-      - run: dotnet test
-  build-pack:
-    name: Build & Publish
-    runs-on: ubuntu-latest
-    steps:
-      - uses: actions/checkout@v4
-      - name: Setup .NET
-        uses: actions/setup-dotnet@v4
-        with:
-          dotnet-version: 8.0.x
-      - run: dotnet restore src/ZaString
-      - run: mkdir -p artifacts
-      - run: dotnet pack src/ZaString --configuration Release --output artifacts --no-build
 
-    needs: build-test
+    permissions:
+      contents: read
 
-  publish:
-    name: Publish NuGet
-    runs-on: ubuntu-latest
-    needs: [build-pack]
     steps:
-      - uses: actions/checkout@v4
+    - uses: actions/checkout@v4
+      with:
+        fetch-depth: 0   # REQUIRED for MinVer
 
-      - name: Publish to GitHub Packages
-        run: |
-          dotnet nuget push \
-            artifacts/*.nupkg \
-            --api-key ${{ secrets.NUGET_GITHUB_PAT }} \
-            --source "github;https://nuget.pkg.github.com/${{ github.repository_owner }}" \
-            --skip-duplicate-packages
+    - name: Setup .NET (latest stable)
+      uses: actions/setup-dotnet@v4
+      with:
+        dotnet-version: |
+          8.0.x          # change to 9.0.x when GA
+        cache: true       # NuGet caching
+
+    - name: Restore, build, test
+      run: |
+        dotnet restore
+        dotnet build --configuration Release
+        dotnet test  --configuration Release
+
+    - name: Pack (incl. symbols)
+      run: dotnet pack --configuration Release --include-symbols
+
+    # ---------- publish to nuget.org ----------
+    - name: Push to nuget.org
+      if: startsWith(github.ref, 'refs/tags/v')
+      run: dotnet nuget push "**/*.nupkg" \
+            --api-key "${{ secrets.NUGET_API_KEY_ZASTRING }}" \
+            --source https://api.nuget.org/v3/index.json \
+            --skip-duplicate
