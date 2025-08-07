@@ -50,6 +50,9 @@ public class Program
         JsonEscapingDemo();
         Console.WriteLine();
 
+        UrlHelpersDemo();
+        Console.WriteLine();
+
         Console.WriteLine("Demo complete!");
     }
 
@@ -155,6 +158,21 @@ public class Program
         var b3 = ZaSpanStringBuilder.Create(big);
         var ok2 = b3.TryAppendJsonEscaped(message);
         Console.WriteLine($"TryAppendJsonEscaped ok={ok2}, value='{b3.AsSpan().ToString()}'");
+    }
+
+    private static void UrlHelpersDemo()
+    {
+        Console.WriteLine("--- URL Helpers ---");
+
+        Span<char> buffer = stackalloc char[256];
+        var builder = ZaSpanStringBuilder.Create(buffer);
+
+        // Path composition ensures single separators
+        builder.AppendPathSegment("api").AppendPathSegment("/v1/").AppendPathSegment("users");
+        builder.AppendQueryParam("q", "a b", isFirst: true);
+        builder.AppendQueryParam("tag", "c#");
+
+        Console.WriteLine(builder.AsSpan().ToString()); // api/v1/users?q=a%20b&tag=c%23
     }
 
     private static void BasicUsageDemo()
