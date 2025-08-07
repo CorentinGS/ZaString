@@ -1,4 +1,6 @@
-﻿namespace ZaString.Core;
+﻿using System.Diagnostics;
+
+namespace ZaString.Core;
 
 /// <summary>
 ///     A zero-allocation string builder that writes directly to a provided Span
@@ -87,6 +89,8 @@ public ref struct ZaSpanStringBuilder
     /// <param name="count">The number of characters written.</param>
     public void Advance(int count)
     {
+        Debug.Assert(count >= 0, "Advance count must be non-negative.");
+        Debug.Assert(Length + count <= Capacity, "Advance would exceed capacity.");
         Length += count;
     }
 
@@ -97,6 +101,32 @@ public ref struct ZaSpanStringBuilder
     public void Clear()
     {
         Length = 0;
+    }
+
+    /// <summary>
+    ///     Reduces the current length to the specified value. Only truncation is allowed.
+    /// </summary>
+    /// <param name="newLength">The new length, which must be between 0 and the current Length.</param>
+    /// <exception cref="ArgumentOutOfRangeException">Thrown if newLength is negative or greater than the current Length.</exception>
+    public void SetLength(int newLength)
+    {
+        if ((uint)newLength > (uint)Length)
+            throw new ArgumentOutOfRangeException(nameof(newLength));
+
+        Length = newLength;
+    }
+
+    /// <summary>
+    ///     Removes the last <paramref name="count"/> characters from the written span.
+    /// </summary>
+    /// <param name="count">Number of characters to remove. Must be between 0 and current Length.</param>
+    /// <exception cref="ArgumentOutOfRangeException">Thrown if count is negative or greater than current Length.</exception>
+    public void RemoveLast(int count)
+    {
+        if ((uint)count > (uint)Length)
+            throw new ArgumentOutOfRangeException(nameof(count));
+
+        Length -= count;
     }
 
     /// <summary>

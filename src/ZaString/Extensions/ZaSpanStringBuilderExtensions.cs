@@ -9,6 +9,96 @@ namespace ZaString.Extensions;
 public static class ZaSpanStringBuilderExtensions
 {
         /// <summary>
+        ///     Attempts to reserve a writable span of the specified size without throwing.
+        ///     On success, caller must write up to <paramref name="size"/> characters and then call <see cref="ZaSpanStringBuilder.Advance(int)"/> with the actual number written.
+        /// </summary>
+        /// <param name="builder">The builder.</param>
+        /// <param name="size">Requested size to reserve.</param>
+        /// <param name="writeSpan">The span the caller can write into.</param>
+        /// <returns>true if reserved; false if capacity is insufficient.</returns>
+        public static bool TryGetAppendSpan(ref this ZaSpanStringBuilder builder, int size, out Span<char> writeSpan)
+        {
+            if (size < 0)
+            {
+                throw new ArgumentOutOfRangeException(nameof(size));
+            }
+
+            if (size == 0)
+            {
+                writeSpan = Span<char>.Empty;
+                return true;
+            }
+
+            if (builder.RemainingSpan.Length < size)
+            {
+                writeSpan = Span<char>.Empty;
+                return false;
+            }
+
+            writeSpan = builder.RemainingSpan[..size];
+            return true;
+        }
+
+        /// <summary>
+        ///     Reserves a writable span of the specified size or throws if the capacity is insufficient.
+        ///     On success, caller must write up to <paramref name="size"/> characters and then call <see cref="ZaSpanStringBuilder.Advance(int)"/> with the actual number written.
+        /// </summary>
+        public static ref ZaSpanStringBuilder GetAppendSpan(ref this ZaSpanStringBuilder builder, int size, out Span<char> writeSpan)
+        {
+            if (!TryGetAppendSpan(ref builder, size, out writeSpan))
+            {
+                ThrowOutOfRangeException();
+            }
+
+            return ref builder;
+        }
+
+        /// <summary>
+        ///     Removes the last <paramref name="count"/> characters from the written span.
+        /// </summary>
+        public static ref ZaSpanStringBuilder RemoveLast(ref this ZaSpanStringBuilder builder, int count)
+        {
+            if (count < 0 || count > builder.Length)
+            {
+                throw new ArgumentOutOfRangeException(nameof(count));
+            }
+
+            if (count > 0)
+            {
+                builder.RemoveLast(count);
+            }
+
+            return ref builder;
+        }
+
+        /// <summary>
+        ///     Sets the current length to <paramref name="newLength"/>. Must be between 0 and Capacity.
+        ///     If <paramref name="newLength"/> is less than the current Length, the content is logically truncated.
+        /// </summary>
+        public static ref ZaSpanStringBuilder SetLength(ref this ZaSpanStringBuilder builder, int newLength)
+        {
+            if (newLength < 0 || newLength > builder.Length)
+            {
+                throw new ArgumentOutOfRangeException(nameof(newLength));
+            }
+
+            builder.SetLength(newLength);
+            return ref builder;
+        }
+
+        /// <summary>
+        ///     Ensures the written span ends with the specified character; appends it if needed.
+        /// </summary>
+        public static ref ZaSpanStringBuilder EnsureEndsWith(ref this ZaSpanStringBuilder builder, char value)
+        {
+            if (builder.Length == 0 || builder[builder.Length - 1] != value)
+            {
+                builder.Append(value);
+            }
+
+            return ref builder;
+        }
+        /// <summary>
         ///     Appends the specified character repeated <paramref name="count"/> times.
         /// </summary>
         /// <exception cref="ArgumentOutOfRangeException">Thrown if count is negative or buffer is too small.</exception>
