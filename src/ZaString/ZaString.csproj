@@ -8,7 +8,7 @@
         <Authors>Corentin Giaufer Saubert</Authors>
         <License>MIT</License>
         <Description>ZaString is a library for zero-allocation string manipulation in C# using Span and ReadonlySpan.</Description>
-        <Version>0.1.0-beta</Version>
+        <Version>0.1.0-rc</Version>
         <RepositoryUrl>https://github.com/CorentinGS/ZaString</RepositoryUrl>
     </PropertyGroup>
 

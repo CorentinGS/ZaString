@@ -1,6 +1,6 @@
 # ZaString
 
-[![.NET](https://github.com/CorentinGS/ZaString/actions/workflows/dotnet.yml/badge.svg)](https://github.com/CorentinGS/ZaString/actions/workflows/dotnet.yml)
+[![.NET](https://github.com/CorentinGS/ZaString/actions/workflows/ci.yml/badge.svg)](https://github.com/CorentinGS/ZaString/actions/workflows/ci.yml)
 [![NuGet](https://img.shields.io/nuget/v/ZaString.svg)](https://www.nuget.org/packages/ZaString)
 [![License](https://img.shields.io/badge/license-MIT-blue.svg)](LICENSE)
 
