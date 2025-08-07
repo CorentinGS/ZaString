@@ -9,6 +9,99 @@ namespace ZaString.Extensions;
 public static class ZaSpanStringBuilderExtensions
 {
         /// <summary>
+        ///     Appends the specified character repeated <paramref name="count"/> times.
+        /// </summary>
+        /// <exception cref="ArgumentOutOfRangeException">Thrown if count is negative or buffer is too small.</exception>
+        public static ref ZaSpanStringBuilder AppendRepeat(ref this ZaSpanStringBuilder builder, char value, int count)
+        {
+            if (count < 0)
+            {
+                throw new ArgumentOutOfRangeException(nameof(count));
+            }
+
+            if (count == 0)
+            {
+                return ref builder;
+            }
+
+            if (builder.RemainingSpan.Length < count)
+            {
+                ThrowOutOfRangeException();
+            }
+
+            builder.RemainingSpan[..count].Fill(value);
+            builder.Advance(count);
+            return ref builder;
+        }
+
+        /// <summary>
+        ///     Attempts to append the specified character repeated <paramref name="count"/> times without throwing.
+        /// </summary>
+        /// <returns>true if appended; otherwise false when capacity is insufficient.</returns>
+        public static bool TryAppendRepeat(ref this ZaSpanStringBuilder builder, char value, int count)
+        {
+            if (count < 0)
+            {
+                throw new ArgumentOutOfRangeException(nameof(count));
+            }
+
+            if (count == 0)
+            {
+                return true;
+            }
+
+            if (builder.RemainingSpan.Length < count)
+            {
+                return false;
+            }
+
+            builder.RemainingSpan[..count].Fill(value);
+            builder.Advance(count);
+            return true;
+        }
+
+        /// <summary>
+        ///     Appends the elements separated by <paramref name="separator"/>.
+        ///     Null elements are treated as empty strings.
+        /// </summary>
+        public static ref ZaSpanStringBuilder AppendJoin(ref this ZaSpanStringBuilder builder, ReadOnlySpan<char> separator, params string?[] values)
+        {
+            for (var i = 0; i < values.Length; i++)
+            {
+                if (i > 0)
+                {
+                    builder.Append(separator);
+                }
+
+                var s = values[i];
+                if (s is not null)
+                {
+                    builder.Append(s);
+                }
+            }
+
+            return ref builder;
+        }
+
+        /// <summary>
+        ///     Appends the elements of <paramref name="values"/> separated by <paramref name="separator"/>.
+        /// </summary>
+        public static ref ZaSpanStringBuilder AppendJoin<T>(ref this ZaSpanStringBuilder builder, ReadOnlySpan<char> separator, ReadOnlySpan<T> values, ReadOnlySpan<char> format = default, IFormatProvider? provider = null)
+            where T : ISpanFormattable
+        {
+            for (var i = 0; i < values.Length; i++)
+            {
+                if (i > 0)
+                {
+                    builder.Append(separator);
+                }
+
+                builder.Append(values[i], format, provider);
+            }
+
+            return ref builder;
+        }
+        /// <summary>
         ///     Attempts to append a read-only span of characters to the builder without throwing.
         /// </summary>
         /// <param name="builder">The builder instance.</param>
