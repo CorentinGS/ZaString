@@ -36,7 +36,4 @@ jobs:
     # ---------- publish to nuget.org ----------
     - name: Push to nuget.org
       if: startsWith(github.ref, 'refs/tags/v')
-      run: dotnet nuget push "**/*.nupkg" \
-            --api-key "${{ secrets.NUGET_API_KEY_ZASTRING }}" \
-            --source https://api.nuget.org/v3/index.json \
-            --skip-duplicate
+      run: dotnet nuget push **/*.nupkg --api-key "${{ secrets.NUGET_API_KEY_ZASTRING }}" --source "https://api.nuget.org/v3/index.json" --skip-duplicate
