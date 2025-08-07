@@ -58,7 +58,7 @@ public sealed class ZaPooledStringBuilder : IDisposable
     private void EnsureCapacity(int additionalRequired)
     {
         ArgumentOutOfRangeException.ThrowIfNegative(additionalRequired);
-        
+
         var required = Length + additionalRequired;
         if (required <= _buffer.Length) return;
 
@@ -116,8 +116,10 @@ public sealed class ZaPooledStringBuilder : IDisposable
                 return this;
             }
 
-            // Grow and retry
-            EnsureCapacity(Math.Max(1, _buffer.Length));
+            // Grow and retry: ensure growth beyond current capacity by at least one character
+            var remaining = _buffer.Length - Length;
+            var growBy = remaining + 1; // force capacity to exceed current length
+            EnsureCapacity(growBy);
         }
     }
 

@@ -21,10 +21,32 @@ public static class ZaSpanStringBuilderExtensions
     }
 
     /// <summary>
+    ///     Appends an interpolated string using a custom handler with an explicit format provider.
+    /// </summary>
+    public static ref ZaSpanStringBuilder Append(ref this ZaSpanStringBuilder builder, IFormatProvider provider,
+        [InterpolatedStringHandlerArgument("builder", "provider")]
+        ZaInterpolatedStringHandler handler)
+    {
+        builder = handler.GetResult();
+        return ref builder;
+    }
+
+    /// <summary>
     ///     Appends an interpolated string followed by the default line terminator.
     /// </summary>
     public static ref ZaSpanStringBuilder AppendLine(ref this ZaSpanStringBuilder builder,
         [InterpolatedStringHandlerArgument("builder")]
+        ZaInterpolatedStringHandler handler)
+    {
+        builder = handler.GetResult();
+        return ref builder.AppendLine();
+    }
+
+    /// <summary>
+    ///     Appends an interpolated string with provider followed by the default line terminator.
+    /// </summary>
+    public static ref ZaSpanStringBuilder AppendLine(ref this ZaSpanStringBuilder builder, IFormatProvider provider,
+        [InterpolatedStringHandlerArgument("builder", "provider")]
         ZaInterpolatedStringHandler handler)
     {
         builder = handler.GetResult();
@@ -80,16 +102,18 @@ public static class ZaSpanStringBuilderExtensions
     /// </summary>
     public static ref ZaSpanStringBuilder RemoveLast(ref this ZaSpanStringBuilder builder, int count)
     {
-        if (count < 0 || count > builder.Length)
+        ArgumentOutOfRangeException.ThrowIfNegative(count);
+        if (count == 0)
         {
-            throw new ArgumentOutOfRangeException(nameof(count));
+            return ref builder;
         }
 
-        if (count > 0)
+        if (builder.Length < count)
         {
-            builder.RemoveLast(count);
+            ThrowOutOfRangeException();
         }
 
+        builder.Advance(-count);
         return ref builder;
     }
 
@@ -905,6 +929,7 @@ public static class ZaSpanStringBuilderExtensions
                 dest[0] = '%';
                 WriteHexByte((byte)codePoint, dest.Slice(1, 2));
                 return 3;
+
             case <= 0x7FF:
             {
                 var b1 = (byte)(0b1100_0000 | codePoint >> 6);

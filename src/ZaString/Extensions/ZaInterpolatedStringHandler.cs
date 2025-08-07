@@ -42,6 +42,12 @@ public ref struct ZaInterpolatedStringHandler
         _builder.Append(value);
     }
 
+    // * Support boolean interpolation without requiring ISpanFormattable
+    public void AppendFormatted(bool value)
+    {
+        _builder.Append(value ? "true" : "false");
+    }
+
     public void AppendFormatted<T>(T value) where T : ISpanFormattable
     {
         _builder.Append(value, default, _provider);
@@ -52,7 +58,7 @@ public ref struct ZaInterpolatedStringHandler
         _builder.Append(value, format, _provider);
     }
 
-    public ZaSpanStringBuilder GetResult()
+    public readonly ZaSpanStringBuilder GetResult()
     {
         return _builder;
     }

@@ -4,7 +4,9 @@
 [![NuGet](https://img.shields.io/nuget/v/ZaString.svg)](https://www.nuget.org/packages/ZaString)
 [![License](https://img.shields.io/badge/license-MIT-blue.svg)](LICENSE)
 
-**ZaString** is a high-performance, zero-allocation string manipulation library for C# that uses `Span<T>` and `ReadOnlySpan<T>` for optimal memory efficiency. Built for .NET 9.0+, it provides a fluent API for building strings without heap allocations.
+**ZaString** is a high-performance, zero-allocation string manipulation library for C# that uses `Span<T>` and
+`ReadOnlySpan<T>` for optimal memory efficiency. Built for .NET 9.0+, it provides a fluent API for building strings
+without heap allocations.
 
 ## 🚀 Key Features
 
@@ -180,51 +182,57 @@ else
 
 ## 📊 Performance
 
-ZaString significantly outperforms traditional string building approaches. Here are the actual benchmark results from comprehensive testing:
+ZaString significantly outperforms traditional string building approaches. Here are the actual benchmark results from
+comprehensive testing:
 
 ### Basic String Building Performance
 
-| Method | Mean Time | Memory Allocations | Performance Ratio |
-|--------|-----------|-------------------|-------------------|
-| `StringBuilder` (Baseline) | 146.1 ns | 480 B | 1.00x |
-| `String` concatenation | 116.3 ns | 248 B | 0.80x |
-| `String` interpolation | 116.9 ns | 136 B | 0.80x |
-| **ZaSpanStringBuilder** | **115.2 ns** | **0 B** | **0.79x** |
+| Method                     | Mean Time    | Memory Allocations | Performance Ratio |
+|----------------------------|--------------|--------------------|-------------------|
+| `StringBuilder` (Baseline) | 146.1 ns     | 480 B              | 1.00x             |
+| `String` concatenation     | 116.3 ns     | 248 B              | 0.80x             |
+| `String` interpolation     | 116.9 ns     | 136 B              | 0.80x             |
+| **ZaSpanStringBuilder**    | **115.2 ns** | **0 B**            | **0.79x**         |
 
 ### Detailed Benchmark Results
 
 **Basic String Building:**
+
 - `StringBuilder`: 146.1 ns, 480 B allocated
-- `StringConcatenation`: 116.3 ns, 248 B allocated  
+- `StringConcatenation`: 116.3 ns, 248 B allocated
 - `StringInterpolation`: 116.9 ns, 136 B allocated
 - **ZaSpanStringBuilder**: **115.2 ns, 0 B allocated** ⚡
 
 **Number Formatting:**
+
 - `StringBuilder`: 295.3 ns, 584 B allocated
 - **ZaSpanStringBuilder**: **234.9 ns, 0 B allocated** (20% faster)
 
 **Large String Operations:**
+
 - `StringBuilder`: 1,565.9 ns, 27,312 B allocated
 - **ZaSpanStringBuilder**: **1,236.5 ns, 0 B allocated** (21% faster)
 
 **DateTime Formatting:**
+
 - `StringBuilder`: 189.0 ns, 384 B allocated
 - **ZaSpanStringBuilder**: **135.7 ns, 0 B allocated** (28% faster)
 
 **Span vs String Processing:**
+
 - `StringBuilder`: 24.7 ns, 256 B allocated
 - **ZaSpanStringBuilder**: **10.4 ns, 0 B allocated** (58% faster)
 
 ### Number Formatting Performance
 
-| Type | Traditional | ZaSpanStringBuilder | Improvement |
-|------|-------------|-------------------|-------------|
-| Integer | 15.9 ns | **11.3 ns** | **29% faster** |
-| Double | 100.6 ns | 103.6 ns | Comparable |
-| Float | 85.2 ns | 85.3 ns | Comparable |
-| Long | 9.7 ns | 11.9 ns | Comparable |
-| Integer (Formatted) | 36.5 ns | 37.4 ns | Comparable |
-| Double (Formatted) | 76.4 ns | 77.2 ns | Comparable |
+| Type                | Traditional | ZaSpanStringBuilder | Improvement    |
+|---------------------|-------------|---------------------|----------------|
+| Integer             | 15.9 ns     | **11.3 ns**         | **29% faster** |
+| Double              | 100.6 ns    | 103.6 ns            | Comparable     |
+| Float               | 85.2 ns     | 85.3 ns             | Comparable     |
+| Long                | 9.7 ns      | 11.9 ns             | Comparable     |
+| Integer (Formatted) | 36.5 ns     | 37.4 ns             | Comparable     |
+| Double (Formatted)  | 76.4 ns     | 77.2 ns             | Comparable     |
 
 ### Key Performance Benefits
 
@@ -306,7 +314,8 @@ See the [samples](samples/ZaString.Demo/) directory for complete working example
 
 ## 🤝 Contributing
 
-Contributions are welcome! Please feel free to submit a Pull Request. For major changes, please open an issue first to discuss what you would like to change.
+Contributions are welcome! Please feel free to submit a Pull Request. For major changes, please open an issue first to
+discuss what you would like to change.
 
 ## 📄 License
 

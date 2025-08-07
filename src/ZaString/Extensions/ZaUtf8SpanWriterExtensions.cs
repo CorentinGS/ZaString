@@ -1,5 +1,6 @@
 using System.Buffers;
 using System.Buffers.Text;
+using System.Globalization;
 using System.Text;
 using ZaString.Core;
 
@@ -60,7 +61,7 @@ public static class ZaUtf8SpanWriterExtensions
 
     public static ref ZaUtf8SpanWriter Append(ref this ZaUtf8SpanWriter writer, int value, ReadOnlySpan<char> format = default)
     {
-        var standardFormat = format.Length > 0 ? new StandardFormat(format[0]) : default;
+        var standardFormat = ParseStandardFormat(format);
         if (!Utf8Formatter.TryFormat(value, writer.RemainingSpan, out var bytesWritten, standardFormat))
         {
             ThrowOutOfRangeException();
@@ -72,7 +73,7 @@ public static class ZaUtf8SpanWriterExtensions
 
     public static ref ZaUtf8SpanWriter Append(ref this ZaUtf8SpanWriter writer, long value, ReadOnlySpan<char> format = default)
     {
-        var standardFormat = format.Length > 0 ? new StandardFormat(format[0]) : default;
+        var standardFormat = ParseStandardFormat(format);
         if (!Utf8Formatter.TryFormat(value, writer.RemainingSpan, out var bytesWritten, standardFormat))
         {
             ThrowOutOfRangeException();
@@ -84,7 +85,7 @@ public static class ZaUtf8SpanWriterExtensions
 
     public static ref ZaUtf8SpanWriter Append(ref this ZaUtf8SpanWriter writer, double value, ReadOnlySpan<char> format = default)
     {
-        var standardFormat = format.Length > 0 ? new StandardFormat(format[0]) : default;
+        var standardFormat = ParseStandardFormat(format);
         if (!Utf8Formatter.TryFormat(value, writer.RemainingSpan, out var bytesWritten, standardFormat))
         {
             ThrowOutOfRangeException();
@@ -94,15 +95,39 @@ public static class ZaUtf8SpanWriterExtensions
         return ref writer;
     }
 
+    /// <summary>
+    ///     Appends a <see cref="DateTime" /> value using a format.
+    /// </summary>
+    /// <remarks>
+    ///     WARNING: When <paramref name="format" /> is longer than a single standard format specifier (e.g., "O", "R"),
+    ///     this method falls back to <see cref="DateTime.ToString(string?, IFormatProvider?)" /> with
+    ///     <see cref="CultureInfo.InvariantCulture" />, which allocates a temporary <see cref="string" />.
+    ///     Prefer single-letter standard formats to preserve zero-allocation behavior.
+    /// </remarks>
     public static ref ZaUtf8SpanWriter Append(ref this ZaUtf8SpanWriter writer, DateTime value, ReadOnlySpan<char> format = default)
     {
-        var standardFormat = format.Length > 0 ? new StandardFormat(format[0]) : default;
-        if (!Utf8Formatter.TryFormat(value, writer.RemainingSpan, out var bytesWritten, standardFormat))
+        if (format.Length <= 1)
+        {
+            var standardFormat = format.Length == 1 ? new StandardFormat(format[0]) : default;
+            if (!Utf8Formatter.TryFormat(value, writer.RemainingSpan, out var bytesWritten, standardFormat))
+            {
+                ThrowOutOfRangeException();
+            }
+
+            writer.Advance(bytesWritten);
+            return ref writer;
+        }
+
+        // Fallback path for custom/multi-character formats (allocates)
+        var s = value.ToString(format.ToString(), CultureInfo.InvariantCulture);
+        var required = Encoding.UTF8.GetByteCount(s);
+        if (required > writer.RemainingSpan.Length)
         {
             ThrowOutOfRangeException();
         }
 
-        writer.Advance(bytesWritten);
+        var written = Encoding.UTF8.GetBytes(s, writer.RemainingSpan);
+        writer.Advance(written);
         return ref writer;
     }
 
@@ -165,5 +190,25 @@ public static class ZaUtf8SpanWriterExtensions
     private static void ThrowOutOfRangeException()
     {
         throw new ArgumentOutOfRangeException("value", "The destination buffer is too small.");
+    }
+
+    private static StandardFormat ParseStandardFormat(ReadOnlySpan<char> format)
+    {
+        if (format.Length == 0)
+        {
+            return default;
+        }
+
+        if (format.Length == 1)
+        {
+            return new StandardFormat(format[0]);
+        }
+
+        if (byte.TryParse(format[1..], out var precision))
+        {
+            return new StandardFormat(format[0], precision);
+        }
+
+        return new StandardFormat(format[0]);
     }
 }

@@ -358,3 +358,260 @@ public class SpanVsStringBenchmarks
         return builder.ToString();
     }
 }
+
+[MemoryDiagnoser]
+[SimpleJob]
+public class ZaUtf8SpanWriterBenchmarks
+{
+    private const string TestString = "Hello, UTF-8 World!";
+    private const int TestInt = 12345;
+    private const double TestDouble = 3.14159;
+    private static readonly DateTime TestDateTime = DateTime.Parse("2023-12-25T10:30:45");
+
+    [Benchmark(Baseline = true)]
+    public byte[] Encoding_UTF8_GetBytes()
+    {
+        return Encoding.UTF8.GetBytes(TestString);
+    }
+
+    [Benchmark]
+    public int ZaUtf8SpanWriter_String()
+    {
+        Span<byte> buffer = stackalloc byte[256];
+        var writer = ZaUtf8SpanWriter.Create(buffer);
+        writer.Append(TestString);
+        return writer.Length;
+    }
+
+    [Benchmark]
+    public int ZaUtf8SpanWriter_Int()
+    {
+        Span<byte> buffer = stackalloc byte[32];
+        var writer = ZaUtf8SpanWriter.Create(buffer);
+        writer.Append(TestInt);
+        return writer.Length;
+    }
+
+    [Benchmark]
+    public int ZaUtf8SpanWriter_Double()
+    {
+        Span<byte> buffer = stackalloc byte[32];
+        var writer = ZaUtf8SpanWriter.Create(buffer);
+        writer.Append(TestDouble);
+        return writer.Length;
+    }
+
+    [Benchmark]
+    public int ZaUtf8SpanWriter_DateTime()
+    {
+        Span<byte> buffer = stackalloc byte[64];
+        var writer = ZaUtf8SpanWriter.Create(buffer);
+        writer.Append(TestDateTime);
+        return writer.Length;
+    }
+
+    [Benchmark]
+    public int ZaUtf8SpanWriter_Hex()
+    {
+        Span<byte> buffer = stackalloc byte[64];
+        var writer = ZaUtf8SpanWriter.Create(buffer);
+        var data = new byte[]
+        {
+            0xAB,
+            0xCD,
+            0xEF,
+            0x12,
+            0x34,
+            0x56
+        };
+        writer.AppendHex(data, true);
+        return writer.Length;
+    }
+
+    [Benchmark]
+    public int ZaUtf8SpanWriter_Base64()
+    {
+        Span<byte> buffer = stackalloc byte[128];
+        var writer = ZaUtf8SpanWriter.Create(buffer);
+        var data = new byte[]
+        {
+            0x01,
+            0x02,
+            0x03,
+            0x04,
+            0x05,
+            0x06,
+            0x07,
+            0x08
+        };
+        writer.AppendBase64(data);
+        return writer.Length;
+    }
+
+    [Benchmark]
+    public int ZaUtf8SpanWriter_Complex()
+    {
+        Span<byte> buffer = stackalloc byte[512];
+        var writer = ZaUtf8SpanWriter.Create(buffer);
+
+        writer.Append("User: ")
+            .Append("John Doe")
+            .Append(", ID: ")
+            .Append(TestInt)
+            .Append(", Balance: ")
+            .Append(TestDouble)
+            .Append(", Created: ")
+            .Append(TestDateTime);
+
+        return writer.Length;
+    }
+}
+
+[MemoryDiagnoser]
+[SimpleJob]
+public class ZaPooledStringBuilderBenchmarks
+{
+    private const string TestString = "Hello, Pooled World!";
+    private const int TestInt = 12345;
+    private const double TestDouble = 3.14159;
+
+    [Benchmark(Baseline = true)]
+    public string StringBuilder_Pooled()
+    {
+        var sb = new StringBuilder();
+        sb.Append("User: ").Append("John Doe").Append(", Age: ").Append(TestInt);
+        return sb.ToString();
+    }
+
+    [Benchmark]
+    public string ZaPooledStringBuilder_Basic()
+    {
+        using var builder = ZaPooledStringBuilder.Rent(128);
+        builder.Append("User: ").Append("John Doe").Append(", Age: ").Append(TestInt);
+        return builder.ToString();
+    }
+
+    [Benchmark]
+    public string ZaPooledStringBuilder_Complex()
+    {
+        using var builder = ZaPooledStringBuilder.Rent(256);
+        builder.Append("User: ")
+            .Append("John Doe")
+            .Append(", Age: ")
+            .Append(TestInt)
+            .Append(", Balance: $")
+            .Append(TestDouble, "F2")
+            .Append(", Active: ")
+            .Append(true);
+        return builder.ToString();
+    }
+
+    [Benchmark]
+    public string ZaPooledStringBuilder_ManyAppends()
+    {
+        using var builder = ZaPooledStringBuilder.Rent(512);
+        for (var i = 0; i < 10; i++)
+        {
+            builder.Append("Item ").Append(i).Append(": ").Append(TestString).Append(" - ");
+        }
+
+        return builder.ToString();
+    }
+}
+
+[MemoryDiagnoser]
+[SimpleJob]
+public class EscapingAndEncodingBenchmarks
+{
+    private const string JsonString = "\"Hello\n\tWorld\"";
+    private const string HtmlString = "<script>alert('xss')</script>";
+    private const string UrlString = "Hello World!";
+    private const string CsvString = "Value,with,commas";
+
+    [Benchmark(Baseline = true)]
+    public string Json_Manual()
+    {
+        return JsonString.Replace("\\", "\\\\").Replace("\"", "\\\"").Replace("\n", "\\n").Replace("\t", "\\t");
+    }
+
+    [Benchmark]
+    public int ZaSpanStringBuilder_JsonEscaped()
+    {
+        Span<char> buffer = stackalloc char[256];
+        var builder = ZaSpanStringBuilder.Create(buffer);
+        builder.AppendJsonEscaped(JsonString);
+        return builder.Length;
+    }
+
+    [Benchmark]
+    public string Html_Manual()
+    {
+        return HtmlString.Replace("<", "&lt;").Replace(">", "&gt;").Replace("&", "&amp;").Replace("\"", "&quot;").Replace("'", "&#39;");
+    }
+
+    [Benchmark]
+    public int ZaSpanStringBuilder_HtmlEscaped()
+    {
+        Span<char> buffer = stackalloc char[256];
+        var builder = ZaSpanStringBuilder.Create(buffer);
+        builder.AppendHtmlEscaped(HtmlString);
+        return builder.Length;
+    }
+
+    [Benchmark]
+    public string Url_Manual()
+    {
+        return Uri.EscapeDataString(UrlString);
+    }
+
+    [Benchmark]
+    public int ZaSpanStringBuilder_UrlEncoded()
+    {
+        Span<char> buffer = stackalloc char[256];
+        var builder = ZaSpanStringBuilder.Create(buffer);
+        builder.AppendUrlEncoded(UrlString);
+        return builder.Length;
+    }
+
+    [Benchmark]
+    public int ZaSpanStringBuilder_CsvEscaped()
+    {
+        Span<char> buffer = stackalloc char[256];
+        var builder = ZaSpanStringBuilder.Create(buffer);
+        builder.AppendCsvEscaped(CsvString);
+        return builder.Length;
+    }
+}
+
+[MemoryDiagnoser]
+[SimpleJob]
+public class InterpolationBenchmarks
+{
+    private const string Name = "John Doe";
+    private const int Age = 30;
+    private const double Balance = 1234.56;
+
+    [Benchmark(Baseline = true)]
+    public string StringInterpolation_Traditional()
+    {
+        return $"User: {Name}, Age: {Age}, Balance: {Balance:F2}";
+    }
+
+    [Benchmark]
+    public int ZaSpanStringBuilder_Interpolation()
+    {
+        Span<char> buffer = stackalloc char[256];
+        var builder = ZaSpanStringBuilder.Create(buffer);
+        builder.Append($"User: {Name}, Age: {Age}, Balance: {Balance:F2}");
+        return builder.Length;
+    }
+
+    [Benchmark]
+    public int ZaSpanStringBuilder_ManualAppends()
+    {
+        Span<char> buffer = stackalloc char[256];
+        var builder = ZaSpanStringBuilder.Create(buffer);
+        builder.Append("User: ").Append(Name).Append(", Age: ").Append(Age).Append(", Balance: ").Append(Balance, "F2");
+        return builder.Length;
+    }
+}

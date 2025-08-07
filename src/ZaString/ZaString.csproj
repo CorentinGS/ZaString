@@ -20,7 +20,7 @@
         <EmbedUntrackedSources>true</EmbedUntrackedSources>
         <Deterministic>true</Deterministic>
         <ContinuousIntegrationBuild>true</ContinuousIntegrationBuild>
-        
+
         <!-- MinVer configuration -->
         <MinVerTagPrefix>v</MinVerTagPrefix>
         <MinVerDefaultPreReleaseIdentifiers>preview.0</MinVerDefaultPreReleaseIdentifiers>
@@ -34,7 +34,7 @@
     </ItemGroup>
 
     <ItemGroup>
-        <None Include="$(MSBuildThisFileDirectory)..\..\README.md" Pack="true" PackagePath="/" />
+        <None Include="$(MSBuildThisFileDirectory)..\..\README.md" Pack="true" PackagePath="/"/>
     </ItemGroup>
 
 </Project>
