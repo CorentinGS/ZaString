@@ -31,7 +31,7 @@ jobs:
         dotnet test  --configuration Release
 
     - name: Pack (incl. symbols)
-      run: dotnet pack --configuration Release --include-symbols
+      run: dotnet pack src/ZaString --configuration Release --include-symbols
 
     # ---------- publish to nuget.org ----------
     - name: Push to nuget.org

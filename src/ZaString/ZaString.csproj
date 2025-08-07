@@ -1,5 +1,4 @@
 ﻿<Project Sdk="Microsoft.NET.Sdk">
-
     <PropertyGroup>
         <TargetFramework>net8.0</TargetFramework>
         <ImplicitUsings>enable</ImplicitUsings>
@@ -24,11 +23,11 @@
         
         <!-- MinVer configuration -->
         <MinVerTagPrefix>v</MinVerTagPrefix>
-        <MinVerDefaultPreReleasePhase>preview</MinVerDefaultPreReleasePhase>
+        <MinVerDefaultPreReleaseIdentifiers>preview.0</MinVerDefaultPreReleaseIdentifiers>
     </PropertyGroup>
 
     <ItemGroup>
-        <PackageReference Include="MinVer" Version="4.3.0">
+        <PackageReference Include="MinVer" Version="5.0.0">
             <PrivateAssets>all</PrivateAssets>
             <IncludeAssets>runtime; build; native; contentfiles; analyzers; buildtransitive</IncludeAssets>
         </PackageReference>
