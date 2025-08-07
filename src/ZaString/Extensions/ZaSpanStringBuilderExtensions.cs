@@ -8,6 +8,114 @@ namespace ZaString.Extensions;
 /// </summary>
 public static class ZaSpanStringBuilderExtensions
 {
+        /// <summary>
+        ///     Attempts to append a read-only span of characters to the builder without throwing.
+        /// </summary>
+        /// <param name="builder">The builder instance.</param>
+        /// <param name="value">The span of characters to append.</param>
+        /// <returns><c>true</c> if the value was appended; otherwise <c>false</c> if there was not enough capacity.</returns>
+        public static bool TryAppend(ref this ZaSpanStringBuilder builder, ReadOnlySpan<char> value)
+        {
+            if (value.Length > builder.RemainingSpan.Length)
+            {
+                return false;
+            }
+
+            value.CopyTo(builder.RemainingSpan);
+            builder.Advance(value.Length);
+            return true;
+        }
+
+        /// <summary>
+        ///     Attempts to append a string to the builder without throwing.
+        /// </summary>
+        /// <param name="builder">The builder instance.</param>
+        /// <param name="value">The string to append. If null, this is a no-op and returns true.</param>
+        /// <returns><c>true</c> if the value was appended; otherwise <c>false</c> if there was not enough capacity.</returns>
+        public static bool TryAppend(ref this ZaSpanStringBuilder builder, string? value)
+        {
+            return value is null || builder.TryAppend(value.AsSpan());
+        }
+
+        /// <summary>
+        ///     Attempts to append a single character to the builder without throwing.
+        /// </summary>
+        /// <param name="builder">The builder instance.</param>
+        /// <param name="value">The character to append.</param>
+        /// <returns><c>true</c> if the value was appended; otherwise <c>false</c> if there was not enough capacity.</returns>
+        public static bool TryAppend(ref this ZaSpanStringBuilder builder, char value)
+        {
+            if (builder.RemainingSpan.Length < 1)
+            {
+                return false;
+            }
+
+            builder.RemainingSpan[0] = value;
+            builder.Advance(1);
+            return true;
+        }
+
+        /// <summary>
+        ///     Attempts to append a value of a type that implements <see cref="ISpanFormattable"/> without throwing.
+        /// </summary>
+        /// <typeparam name="T">The type of the value, which must implement ISpanFormattable.</typeparam>
+        /// <param name="builder">The builder instance.</param>
+        /// <param name="value">The value to format and append.</param>
+        /// <param name="format">An optional format string for the value.</param>
+        /// <param name="provider">Format provider to use. If null, <see cref="CultureInfo.InvariantCulture"/> is used.</param>
+        /// <returns><c>true</c> if the value was formatted and appended; otherwise <c>false</c> if there was not enough capacity or formatting failed.</returns>
+        public static bool TryAppend<T>(ref this ZaSpanStringBuilder builder, T value, ReadOnlySpan<char> format = default, IFormatProvider? provider = null) where T : ISpanFormattable
+        {
+            provider ??= CultureInfo.InvariantCulture;
+
+            if (!value.TryFormat(builder.RemainingSpan, out var charsWritten, format, provider))
+            {
+                return false;
+            }
+
+            builder.Advance(charsWritten);
+            return true;
+        }
+
+        /// <summary>
+        ///     Attempts to append the default line terminator to the builder without throwing.
+        /// </summary>
+        /// <param name="builder">The builder instance.</param>
+        /// <returns><c>true</c> if the newline was appended; otherwise <c>false</c> if there was not enough capacity.</returns>
+        public static bool TryAppendLine(ref this ZaSpanStringBuilder builder)
+        {
+            var newline = Environment.NewLine.AsSpan();
+            return builder.TryAppend(newline);
+        }
+
+        /// <summary>
+        ///     Attempts to append a string followed by the default line terminator to the builder without throwing.
+        ///     The operation is atomic with respect to capacity: if there is not enough space for both, nothing is written.
+        /// </summary>
+        /// <param name="builder">The builder instance.</param>
+        /// <param name="value">The string to append. If null, only the newline is appended.</param>
+        /// <returns><c>true</c> if the string and newline were appended; otherwise <c>false</c> if there was not enough capacity.</returns>
+        public static bool TryAppendLine(ref this ZaSpanStringBuilder builder, string? value)
+        {
+            var valueLength = value?.Length ?? 0;
+            var newlineLength = Environment.NewLine.Length;
+            var required = valueLength + newlineLength;
+
+            if (required > builder.RemainingSpan.Length)
+            {
+                return false;
+            }
+
+            if (valueLength > 0)
+            {
+                value!.AsSpan().CopyTo(builder.RemainingSpan);
+                builder.Advance(valueLength);
+            }
+
+            Environment.NewLine.AsSpan().CopyTo(builder.RemainingSpan);
+            builder.Advance(newlineLength);
+            return true;
+        }
     /// <summary>
     ///     Appends a read-only span of characters to the builder.
     /// </summary>
