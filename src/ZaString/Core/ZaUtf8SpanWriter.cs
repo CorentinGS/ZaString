@@ -12,17 +12,17 @@ public ref struct ZaUtf8SpanWriter
     private readonly Span<byte> _buffer;
     public int Length { get; private set; }
 
-    private int Capacity
+    private readonly int Capacity
     {
         get => _buffer.Length;
     }
 
-    public ReadOnlySpan<byte> WrittenSpan
+    public readonly ReadOnlySpan<byte> WrittenSpan
     {
         get => _buffer[..Length];
     }
 
-    public Span<byte> RemainingSpan
+    public readonly Span<byte> RemainingSpan
     {
         get => _buffer[Length..];
     }
@@ -50,12 +50,12 @@ public ref struct ZaUtf8SpanWriter
         Length = 0;
     }
 
-    public ReadOnlySpan<byte> AsSpan()
+    public readonly ReadOnlySpan<byte> AsSpan()
     {
         return WrittenSpan;
     }
 
-    public override string ToString()
+    public override readonly string ToString()
     {
         return Encoding.UTF8.GetString(WrittenSpan);
     }
