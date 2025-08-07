@@ -38,7 +38,7 @@ public class ZaSpanStringBuilderTryAppendTests
         Span<char> buffer = stackalloc char[3];
         var builder = ZaSpanStringBuilder.Create(buffer);
 
-        var ok = builder.TryAppend((string?)null);
+        var ok = builder.TryAppend(null);
 
         Assert.True(ok);
         Assert.Equal(0, builder.Length);
@@ -137,7 +137,7 @@ public class ZaSpanStringBuilderTryAppendTests
     {
         var newlineLen = Environment.NewLine.Length;
         var capacity = Math.Max(0, newlineLen - 1);
-        Span<char> buffer = capacity == 0 ? Span<char>.Empty : stackalloc char[capacity];
+        var buffer = capacity == 0 ? Span<char>.Empty : stackalloc char[capacity];
         var builder = ZaSpanStringBuilder.Create(buffer);
 
         var ok = builder.TryAppendLine();
@@ -182,4 +182,3 @@ public class ZaSpanStringBuilderTryAppendTests
         Assert.Equal(required, builder.Length);
     }
 }
-

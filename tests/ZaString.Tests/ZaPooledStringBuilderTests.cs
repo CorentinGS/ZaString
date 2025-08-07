@@ -7,7 +7,7 @@ public class ZaPooledStringBuilderTests
     [Fact]
     public void Append_GrowsAndBuilds()
     {
-        using var b = ZaPooledStringBuilder.Rent(initialCapacity: 4);
+        using var b = ZaPooledStringBuilder.Rent(4);
         b.Append("Hello").Append(", ").Append("World!");
         Assert.Equal("Hello, World!", b.AsSpan());
         Assert.Equal("Hello, World!", b.ToString());
@@ -31,4 +31,3 @@ public class ZaPooledStringBuilderTests
         Assert.Equal("", b.AsSpan());
     }
 }
-

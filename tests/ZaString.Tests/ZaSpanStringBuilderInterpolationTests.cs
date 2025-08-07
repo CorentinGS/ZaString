@@ -44,4 +44,3 @@ public class ZaSpanStringBuilderInterpolationTests
         Assert.Equal($"Line: 42{Environment.NewLine}", builder.AsSpan());
     }
 }
-

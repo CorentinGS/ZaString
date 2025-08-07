@@ -46,10 +46,9 @@ public class ZaSpanStringBuilderUrlHelpersTests
         var builder = ZaSpanStringBuilder.Create(buffer);
 
         builder.Append("/search")
-               .AppendQueryParam("q", "a b", urlEncode: true, isFirst: true)
-               .AppendQueryParam("page", "1", urlEncode: false);
+            .AppendQueryParam("q", "a b", true, true)
+            .AppendQueryParam("page", "1", false);
 
         Assert.Equal("/search?q=a%20b&page=1", builder.AsSpan());
     }
 }
-

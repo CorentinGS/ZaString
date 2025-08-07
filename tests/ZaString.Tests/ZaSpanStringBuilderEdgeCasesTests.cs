@@ -233,9 +233,9 @@ public class ZaSpanStringBuilderEdgeCasesTests
 
         builder.Append("Hello").Append(' ').Append(42).Append(true);
         var lengthBeforeClear = builder.Length;
-        
+
         builder.Clear();
-        
+
         Assert.True(lengthBeforeClear > 0);
         Assert.Equal(0, builder.Length);
         Assert.Equal("", builder.AsSpan());

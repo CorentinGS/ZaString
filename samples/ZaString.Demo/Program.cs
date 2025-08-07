@@ -1,6 +1,6 @@
 ﻿using System.Diagnostics;
-using System.Text;
 using System.Globalization;
+using System.Text;
 using ZaString.Core;
 using ZaString.Extensions;
 
@@ -111,7 +111,12 @@ public class Program
         builder.AppendJoin(", ".AsSpan(), "a", null, "c").AppendLine();
 
         // AppendJoin with ISpanFormattable values and culture
-        var values = new double[] { 1.5, 2.5, 3.5 };
+        var values = new[]
+        {
+            1.5,
+            2.5,
+            3.5
+        };
         builder.AppendJoin<double>("; ".AsSpan(), values, provider: new CultureInfo("fr-FR"));
 
         Console.WriteLine(builder.AsSpan().ToString());
@@ -148,11 +153,11 @@ public class Program
         var message = "Line1\r\nLine2\t\"Quote\"";
 
         builder.Append('{')
-               .Append("\"name\":\"")
-               .AppendJsonEscaped(name)
-               .Append("\",\"message\":\"")
-               .AppendJsonEscaped(message)
-               .Append("\"}");
+            .Append("\"name\":\"")
+            .AppendJsonEscaped(name)
+            .Append("\",\"message\":\"")
+            .AppendJsonEscaped(message)
+            .Append("\"}");
 
         Console.WriteLine(builder.AsSpan().ToString());
 
@@ -188,7 +193,7 @@ public class Program
     {
         Console.WriteLine("--- Pooled Builder ---");
 
-        using var b = ZaPooledStringBuilder.Rent(initialCapacity: 8);
+        using var b = ZaPooledStringBuilder.Rent(8);
         b.Append("Hello").Append(", ").Append("World!").Append(' ').Append(123);
         Console.WriteLine(b.AsSpan().ToString());
         Console.WriteLine(b.ToString());
@@ -472,8 +477,14 @@ public class Program
 
         // Demonstrate hex and base64
         writer.Clear();
-        var data = new byte[] { 0x01, 0x02, 0x03, 0x04 };
-        writer.Append("Hex: ").AppendHex(data, uppercase: true);
+        var data = new byte[]
+        {
+            0x01,
+            0x02,
+            0x03,
+            0x04
+        };
+        writer.Append("Hex: ").AppendHex(data, true);
         writer.Append(", Base64: ").AppendBase64(data);
         Console.WriteLine(Encoding.UTF8.GetString(writer.AsSpan()));
     }

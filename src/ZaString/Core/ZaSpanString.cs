@@ -117,7 +117,7 @@ public ref struct ZaSpanStringBuilder
     }
 
     /// <summary>
-    ///     Removes the last <paramref name="count"/> characters from the written span.
+    ///     Removes the last <paramref name="count" /> characters from the written span.
     /// </summary>
     /// <param name="count">Number of characters to remove. Must be between 0 and current Length.</param>
     /// <exception cref="ArgumentOutOfRangeException">Thrown if count is negative or greater than current Length.</exception>

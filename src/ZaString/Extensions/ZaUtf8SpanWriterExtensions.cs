@@ -1,13 +1,12 @@
 using System.Buffers;
-using System.Globalization;
-using System.Text;
 using System.Buffers.Text;
+using System.Text;
 using ZaString.Core;
 
 namespace ZaString.Extensions;
 
 /// <summary>
-/// Provides extension methods for the <see cref="ZaUtf8SpanWriter" />.
+///     Provides extension methods for the <see cref="ZaUtf8SpanWriter" />.
 /// </summary>
 public static class ZaUtf8SpanWriterExtensions
 {
@@ -42,13 +41,19 @@ public static class ZaUtf8SpanWriterExtensions
 
     public static ref ZaUtf8SpanWriter Append(ref this ZaUtf8SpanWriter writer, char value)
     {
-        var bytes = Encoding.UTF8.GetByteCount(stackalloc char[1] { value });
+        var bytes = Encoding.UTF8.GetByteCount(stackalloc char[1]
+        {
+            value
+        });
         if (bytes > writer.RemainingSpan.Length)
         {
             ThrowOutOfRangeException();
         }
 
-        var written = Encoding.UTF8.GetBytes(stackalloc char[1] { value }, writer.RemainingSpan);
+        var written = Encoding.UTF8.GetBytes(stackalloc char[1]
+        {
+            value
+        }, writer.RemainingSpan);
         writer.Advance(written);
         return ref writer;
     }
@@ -112,6 +117,7 @@ public static class ZaUtf8SpanWriterExtensions
         {
             writer.Append(value);
         }
+
         return ref writer.AppendLine();
     }
 
@@ -130,7 +136,7 @@ public static class ZaUtf8SpanWriterExtensions
         for (var i = 0; i < data.Length; i++)
         {
             var b = data[i];
-            dest[w++] = (byte)hex[(b >> 4) & 0xF];
+            dest[w++] = (byte)hex[b >> 4 & 0xF];
             dest[w++] = (byte)hex[b & 0xF];
         }
 
@@ -160,4 +166,4 @@ public static class ZaUtf8SpanWriterExtensions
     {
         throw new ArgumentOutOfRangeException("value", "The destination buffer is too small.");
     }
-} 
+}

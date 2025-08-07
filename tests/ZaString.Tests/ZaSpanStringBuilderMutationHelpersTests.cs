@@ -56,4 +56,3 @@ public class ZaSpanStringBuilderMutationHelpersTests
         Assert.Equal("abcx", builder.AsSpan());
     }
 }
-
