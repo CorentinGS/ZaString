@@ -225,16 +225,16 @@ comprehensive testing:
 
 ### Number Formatting Performance using Builder
 
+These results use a builder baseline (StringBuilder.AppendFormat with InvariantCulture) for apples-to-apples comparison
+against ZaSpanStringBuilder (zero allocation).
 
-These results use a builder baseline (StringBuilder.AppendFormat with InvariantCulture) for apples-to-apples comparison against ZaSpanStringBuilder (zero allocation).
-
-| Case                      | Builder Mean | Builder Alloc | ZaSpan Mean | ZaSpan Alloc |
-|-------------------------- |-------------:|--------------:|------------:|-------------:|
-| Double                    | 128.70 ns    | 176 B         | 104.26 ns   | 0 B          |
-| Double (Formatted F2)     | 94.20 ns     | 160 B         | 73.33 ns    | 0 B          |
-| Float                     | 105.12 ns    | 168 B         | 88.40 ns    | 0 B          |
-| Long                      | 27.51 ns     | 176 B         | 12.58 ns    | 0 B          |
-| Integer (Formatted N0)    | 59.43 ns     | 168 B         | 38.28 ns    | 0 B          |
+| Case                   | Builder Mean | Builder Alloc | ZaSpan Mean | ZaSpan Alloc |
+|------------------------|-------------:|--------------:|------------:|-------------:|
+| Double                 |    128.70 ns |         176 B |   104.26 ns |          0 B |
+| Double (Formatted F2)  |     94.20 ns |         160 B |    73.33 ns |          0 B |
+| Float                  |    105.12 ns |         168 B |    88.40 ns |          0 B |
+| Long                   |     27.51 ns |         176 B |    12.58 ns |          0 B |
+| Integer (Formatted N0) |     59.43 ns |         168 B |    38.28 ns |          0 B |
 
 Environment: .NET 8.0.19, Ryzen 9 5950X, BenchmarkDotNet 0.15.2.
 
