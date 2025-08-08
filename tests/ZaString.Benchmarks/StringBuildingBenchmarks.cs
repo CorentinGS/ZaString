@@ -239,7 +239,9 @@ public class NumberFormattingBenchmarks
     [Benchmark]
     public string ToString_Double()
     {
-        return TestDouble.ToString(CultureInfo.InvariantCulture);
+        var sb = new StringBuilder();
+        sb.AppendFormat(CultureInfo.InvariantCulture, "{0}", TestDouble);
+        return sb.ToString();
     }
 
     [Benchmark]
@@ -255,7 +257,9 @@ public class NumberFormattingBenchmarks
     [Benchmark]
     public string ToString_Float()
     {
-        return TestFloat.ToString(CultureInfo.InvariantCulture);
+        var sb = new StringBuilder();
+        sb.AppendFormat(CultureInfo.InvariantCulture, "{0}", TestFloat);
+        return sb.ToString();
     }
 
     [Benchmark]
@@ -271,7 +275,9 @@ public class NumberFormattingBenchmarks
     [Benchmark]
     public string ToString_Long()
     {
-        return TestLong.ToString();
+        var sb = new StringBuilder();
+        sb.AppendFormat(CultureInfo.InvariantCulture, "{0}", TestLong);
+        return sb.ToString();
     }
 
     [Benchmark]
@@ -287,7 +293,9 @@ public class NumberFormattingBenchmarks
     [Benchmark]
     public string ToString_IntegerFormatted()
     {
-        return TestInt.ToString("N0");
+        var sb = new StringBuilder();
+        sb.AppendFormat(CultureInfo.InvariantCulture, "{0:N0}", TestInt);
+        return sb.ToString();
     }
 
     [Benchmark]
@@ -302,7 +310,9 @@ public class NumberFormattingBenchmarks
     [Benchmark]
     public string ToString_DoubleFormatted()
     {
-        return TestDouble.ToString("F2");
+        var sb = new StringBuilder();
+        sb.AppendFormat(CultureInfo.InvariantCulture, "{0:F2}", TestDouble);
+        return sb.ToString();
     }
 
     [Benchmark]

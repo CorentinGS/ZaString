@@ -34,6 +34,7 @@ public static class ZaSpanStringBuilderExtensions
     /// <summary>
     ///     Appends an interpolated string followed by the default line terminator.
     /// </summary>
+    [MethodImpl(MethodImplOptions.AggressiveInlining)]
     public static ref ZaSpanStringBuilder AppendLine(ref this ZaSpanStringBuilder builder,
         [InterpolatedStringHandlerArgument("builder")]
         ZaInterpolatedStringHandler handler)
@@ -45,6 +46,7 @@ public static class ZaSpanStringBuilderExtensions
     /// <summary>
     ///     Appends an interpolated string with provider followed by the default line terminator.
     /// </summary>
+    [MethodImpl(MethodImplOptions.AggressiveInlining)]
     public static ref ZaSpanStringBuilder AppendLine(ref this ZaSpanStringBuilder builder, IFormatProvider provider,
         [InterpolatedStringHandlerArgument("builder", "provider")]
         ZaInterpolatedStringHandler handler)
@@ -62,6 +64,7 @@ public static class ZaSpanStringBuilderExtensions
     /// <param name="size">Requested size to reserve.</param>
     /// <param name="writeSpan">The span the caller can write into.</param>
     /// <returns>true if reserved; false if capacity is insufficient.</returns>
+    [MethodImpl(MethodImplOptions.AggressiveInlining)]
     public static bool TryGetAppendSpan(ref this ZaSpanStringBuilder builder, int size, out Span<char> writeSpan)
     {
         ArgumentOutOfRangeException.ThrowIfNegative(size);
@@ -237,6 +240,7 @@ public static class ZaSpanStringBuilderExtensions
     /// <param name="builder">The builder instance.</param>
     /// <param name="value">The span of characters to append.</param>
     /// <returns><c>true</c> if the value was appended; otherwise <c>false</c> if there was not enough capacity.</returns>
+    [MethodImpl(MethodImplOptions.AggressiveInlining)]
     public static bool TryAppend(ref this ZaSpanStringBuilder builder, ReadOnlySpan<char> value)
     {
         if (value.Length > builder.RemainingSpan.Length)

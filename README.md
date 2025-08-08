@@ -223,16 +223,20 @@ comprehensive testing:
 - `StringBuilder`: 24.7 ns, 256 B allocated
 - **ZaSpanStringBuilder**: **10.4 ns, 0 B allocated** (58% faster)
 
-### Number Formatting Performance
+### Number Formatting Performance using Builder
 
-| Type                | Traditional | ZaSpanStringBuilder | Improvement    |
-|---------------------|-------------|---------------------|----------------|
-| Integer             | 15.9 ns     | **11.3 ns**         | **29% faster** |
-| Double              | 100.6 ns    | 103.6 ns            | Comparable     |
-| Float               | 85.2 ns     | 85.3 ns             | Comparable     |
-| Long                | 9.7 ns      | 11.9 ns             | Comparable     |
-| Integer (Formatted) | 36.5 ns     | 37.4 ns             | Comparable     |
-| Double (Formatted)  | 76.4 ns     | 77.2 ns             | Comparable     |
+
+These results use a builder baseline (StringBuilder.AppendFormat with InvariantCulture) for apples-to-apples comparison against ZaSpanStringBuilder (zero allocation).
+
+| Case                      | Builder Mean | Builder Alloc | ZaSpan Mean | ZaSpan Alloc |
+|-------------------------- |-------------:|--------------:|------------:|-------------:|
+| Double                    | 128.70 ns    | 176 B         | 104.26 ns   | 0 B          |
+| Double (Formatted F2)     | 94.20 ns     | 160 B         | 73.33 ns    | 0 B          |
+| Float                     | 105.12 ns    | 168 B         | 88.40 ns    | 0 B          |
+| Long                      | 27.51 ns     | 176 B         | 12.58 ns    | 0 B          |
+| Integer (Formatted N0)    | 59.43 ns     | 168 B         | 38.28 ns    | 0 B          |
+
+Environment: .NET 8.0.19, Ryzen 9 5950X, BenchmarkDotNet 0.15.2.
 
 ### Key Performance Benefits
 
