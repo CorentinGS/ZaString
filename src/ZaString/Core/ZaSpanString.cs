@@ -1,4 +1,6 @@
 ﻿using System.Diagnostics;
+using System.Runtime.InteropServices;
+using System.Runtime.CompilerServices;
 
 namespace ZaString.Core;
 
@@ -83,6 +85,22 @@ public ref struct ZaSpanStringBuilder
     }
 
     /// <summary>
+    ///     Creates a new <see cref="ZaSpanStringBuilder" /> instance with the provided pointer and length.
+    ///     This overload is unsafe and allows for pointer-based operations.
+    /// </summary>
+    /// <param name="ptr">The pointer to the character buffer.</param>
+    /// <param name="length">The length of the buffer.</param>
+    /// <returns>A new <see cref="ZaSpanStringBuilder" /> instance.</returns>
+    /// <exception cref="ArgumentOutOfRangeException">Thrown when length is negative.</exception>
+    /// <exception cref="ArgumentNullException">Thrown when ptr is null and length is not zero.</exception>
+    public static unsafe ZaSpanStringBuilder Create(char* ptr, int length)
+    {
+        ArgumentOutOfRangeException.ThrowIfNegative(length);
+        if (ptr == null && length != 0) throw new ArgumentNullException(nameof(ptr));
+        return new ZaSpanStringBuilder(new Span<char>(ptr, length));
+    }
+
+    /// <summary>
     ///     Advances the write position in the buffer.
     ///     This should be called by append-like operations after writing to the RemainingSpan.
     /// </summary>
@@ -146,5 +164,59 @@ public ref struct ZaSpanStringBuilder
     public override readonly string ToString()
     {
         return new string(WrittenSpan);
+    }
+
+    /// <summary>
+    ///     Returns the built content as a read-only span of bytes representing the UTF-16 little-endian code units.
+    ///     This is a non-allocating view over the same memory as <see cref="WrittenSpan" />.
+    /// </summary>
+    /// <remarks>
+    ///     The resulting bytes are the raw in-memory representation of the <see cref="char" /> data (UTF-16 code units),
+    ///     not an encoded form like UTF-8. Use higher-level encoding APIs if you need UTF-8 bytes.
+    /// </remarks>
+    public readonly ReadOnlySpan<byte> AsByteSpan()
+    {
+        return MemoryMarshal.AsBytes(WrittenSpan);
+    }
+
+    /// <summary>
+    ///     Copies the built content into a newly allocated <see cref="byte"/> array representing UTF-16 little-endian code units.
+    /// </summary>
+    /// <returns>A new byte array whose length is <c>Length * sizeof(char)</c>.</returns>
+    public readonly byte[] ToByteArray()
+    {
+        if (Length == 0)
+        {
+            return [];
+        }
+        var sourceBytes = MemoryMarshal.AsBytes(WrittenSpan);
+        var result = new byte[sourceBytes.Length];
+        sourceBytes.CopyTo(result);
+        return result;
+    }
+
+    /// <summary>
+    ///     Returns a pointer to the underlying character buffer.
+    ///     This method is unsafe and should be used with caution.
+    /// </summary>
+    /// <returns>A pointer to the character buffer, or null if the length is zero.</returns>
+    public unsafe readonly char* GetCharPointer()
+    {
+        if (Length == 0) return null;
+        ref var r = ref MemoryMarshal.GetReference(WrittenSpan);
+        return (char*)Unsafe.AsPointer(ref r);
+    }
+
+    /// <summary>
+    ///     Returns a pointer to the underlying byte buffer representing the UTF-16 little-endian code units.
+    ///     This method is unsafe and should be used with caution.
+    /// </summary>
+    /// <returns>A pointer to the byte buffer, or null if the length is zero.</returns>
+    public unsafe readonly byte* GetBytePointer()
+    {
+        if (Length == 0) return null;
+        var byteSpan = MemoryMarshal.AsBytes(WrittenSpan);
+        ref var r = ref MemoryMarshal.GetReference(byteSpan);
+        return (byte*)Unsafe.AsPointer(ref r);
     }
 }

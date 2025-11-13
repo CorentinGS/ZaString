@@ -1,5 +1,5 @@
 ﻿<wpf:ResourceDictionary xml:space="preserve" xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml" xmlns:s="clr-namespace:System;assembly=mscorlib" xmlns:ss="urn:shemas-jetbrains-com:settings-storage-xaml" xmlns:wpf="http://schemas.microsoft.com/winfx/2006/xaml/presentation">
-	<s:String x:Key="/Default/Environment/Highlighting/HighlightingSourceSnapshotLocation/@EntryValue">C:\Users\corentings\AppData\Local\JetBrains\Rider2024.3\resharper-host\temp\Rider\vAny\CoverageData\_ZaString.1483865915\Snapshot\snapshot.utdcvr</s:String>
+	
 	<s:String x:Key="/Default/Environment/UnitTesting/UnitTestSessionStore/Sessions/=f71a27dd_002D5a58_002D4372_002D81e2_002D89c3b2811c61/@EntryIndexedValue">&lt;SessionState ContinuousTestingMode="0" IsActive="True" Name="ZaSpanStringBuilderEdgeCasesTests" xmlns="urn:schemas-jetbrains-com:jetbrains-ut-session"&gt;&#xD;
   &lt;TestAncestor&gt;&#xD;
     &lt;TestId&gt;xUnit::6B44B7C5-B829-42D4-8AB1-9B85D82A7072::net9.0::ZaString.Tests.ZaSpanStringBuilderBasicTests&lt;/TestId&gt;&#xD;
