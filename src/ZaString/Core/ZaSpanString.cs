@@ -1,6 +1,6 @@
 ﻿using System.Diagnostics;
-using System.Runtime.InteropServices;
 using System.Runtime.CompilerServices;
+using System.Runtime.InteropServices;
 
 namespace ZaString.Core;
 
@@ -180,7 +180,8 @@ public ref struct ZaSpanStringBuilder
     }
 
     /// <summary>
-    ///     Copies the built content into a newly allocated <see cref="byte"/> array representing UTF-16 little-endian code units.
+    ///     Copies the built content into a newly allocated <see cref="byte" /> array representing UTF-16 little-endian code
+    ///     units.
     /// </summary>
     /// <returns>A new byte array whose length is <c>Length * sizeof(char)</c>.</returns>
     public readonly byte[] ToByteArray()
@@ -189,6 +190,7 @@ public ref struct ZaSpanStringBuilder
         {
             return [];
         }
+
         var sourceBytes = MemoryMarshal.AsBytes(WrittenSpan);
         var result = new byte[sourceBytes.Length];
         sourceBytes.CopyTo(result);

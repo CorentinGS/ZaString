@@ -1,4 +1,3 @@
-using System;
 using System.Globalization;
 using System.Runtime.CompilerServices;
 
@@ -59,7 +58,8 @@ public static class ZaFormattableExtensions
     }
 
     /// <summary>
-    ///     Formats the specified <paramref name="value" /> directly as UTF-8 into the provided <paramref name="destination" /> buffer.
+    ///     Formats the specified <paramref name="value" /> directly as UTF-8 into the provided <paramref name="destination" />
+    ///     buffer.
     ///     This avoids transcoding from UTF-16 to UTF-8.
     /// </summary>
     /// <typeparam name="T">A type that implements <see cref="IUtf8SpanFormattable" />.</typeparam>

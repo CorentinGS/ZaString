@@ -504,7 +504,7 @@ public class ZaPooledStringBuilderBenchmarks
     [Benchmark]
     public string ZaPooledStringBuilder_Complex()
     {
-        using var builder = ZaPooledStringBuilder.Rent(256);
+        using var builder = ZaPooledStringBuilder.Rent();
         builder.Append("User: ")
             .Append("John Doe")
             .Append(", Age: ")

@@ -1,6 +1,4 @@
-﻿using System;
-using System.Runtime.InteropServices;
-using Xunit;
+﻿using System.Runtime.InteropServices;
 using ZaString.Core;
 using ZaString.Extensions;
 
@@ -27,9 +25,9 @@ public class ZaSpanStringBuilderByteTests
 
     [Theory]
     [InlineData("A")]
-    [InlineData("Hello")] 
-    [InlineData("é")] 
-    [InlineData("漢字")] 
+    [InlineData("Hello")]
+    [InlineData("é")]
+    [InlineData("漢字")]
     [InlineData("🐱")] // surrogate pair
     public void AsByteSpan_ContentsMatchUnderlyingChars(string value)
     {

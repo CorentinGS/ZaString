@@ -192,7 +192,7 @@ public class ZaUtf8SpanWriterTests
             0xCD,
             0xEF
         };
-        writer.AppendHex(data, false);
+        writer.AppendHex(data);
 
         var expected = Encoding.UTF8.GetBytes("abcdef");
         Assert.True(writer.AsSpan().SequenceEqual(expected));

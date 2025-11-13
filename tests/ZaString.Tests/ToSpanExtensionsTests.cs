@@ -1,7 +1,6 @@
-using System;
 using System.Globalization;
+using System.Text;
 using ZaString.Extensions;
-using Xunit;
 
 namespace ZaString.Tests;
 
@@ -48,7 +47,7 @@ public class ToSpanExtensionsTests
         var guid = new Guid("00112233-4455-6677-8899-aabbccddeeff");
         Span<byte> buffer = stackalloc byte[36];
         var bytes = guid.ToUtf8Span(buffer, "D", CultureInfo.InvariantCulture);
-        Assert.Equal("00112233-4455-6677-8899-aabbccddeeff", System.Text.Encoding.UTF8.GetString(bytes));
+        Assert.Equal("00112233-4455-6677-8899-aabbccddeeff", Encoding.UTF8.GetString(bytes));
     }
 
     [Fact]

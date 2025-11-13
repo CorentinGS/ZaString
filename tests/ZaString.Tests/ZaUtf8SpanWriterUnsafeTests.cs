@@ -1,8 +1,5 @@
-﻿using System;
-using System.Text;
-using Xunit;
+﻿using System.Text;
 using ZaString.Core;
-using ZaString.Extensions;
 
 namespace ZaString.Tests;
 
@@ -21,6 +18,7 @@ public class ZaUtf8SpanWriterUnsafeTests
             {
                 throw new Exception("Test buffer too small");
             }
+
             utf8.CopyTo(writer.RemainingSpan);
             writer.Advance(utf8.Length);
             Assert.Equal(utf8.Length, writer.Length);

@@ -1,6 +1,5 @@
 using System.Globalization;
 using ZaString.Core;
-using ZaString.Extensions;
 
 namespace ZaString.Tests;
 
@@ -35,7 +34,7 @@ public class ZaPooledStringBuilderTests
     public void Append_NullString_DoesNothing()
     {
         using var builder = ZaPooledStringBuilder.Rent(4);
-        builder.Append((string?)null);
+        builder.Append(null);
         Assert.Equal("", builder.ToString());
         Assert.Equal(0, builder.Length);
     }
@@ -153,7 +152,7 @@ public class ZaPooledStringBuilderTests
     [Fact]
     public void ComplexScenario_WorksCorrectly()
     {
-        using var builder = ZaPooledStringBuilder.Rent(256);
+        using var builder = ZaPooledStringBuilder.Rent();
         builder.Append("User: ")
             .Append("John Doe")
             .Append(", Age: ")
