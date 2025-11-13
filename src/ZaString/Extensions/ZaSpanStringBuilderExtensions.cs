@@ -935,46 +935,46 @@ public static class ZaSpanStringBuilderExtensions
                 return 3;
 
             case <= 0x7FF:
-            {
-                var b1 = (byte)(0b1100_0000 | codePoint >> 6);
-                var b2 = (byte)(0b1000_0000 | codePoint & 0b0011_1111);
-                dest[0] = '%';
-                WriteHexByte(b1, dest.Slice(1, 2));
-                dest[3] = '%';
-                WriteHexByte(b2, dest.Slice(4, 2));
-                return 6;
-            }
+                {
+                    var b1 = (byte)(0b1100_0000 | codePoint >> 6);
+                    var b2 = (byte)(0b1000_0000 | codePoint & 0b0011_1111);
+                    dest[0] = '%';
+                    WriteHexByte(b1, dest.Slice(1, 2));
+                    dest[3] = '%';
+                    WriteHexByte(b2, dest.Slice(4, 2));
+                    return 6;
+                }
 
             case <= 0xFFFF:
-            {
-                var b1 = (byte)(0b1110_0000 | codePoint >> 12);
-                var b2 = (byte)(0b1000_0000 | codePoint >> 6 & 0b0011_1111);
-                var b3 = (byte)(0b1000_0000 | codePoint & 0b0011_1111);
-                dest[0] = '%';
-                WriteHexByte(b1, dest.Slice(1, 2));
-                dest[3] = '%';
-                WriteHexByte(b2, dest.Slice(4, 2));
-                dest[6] = '%';
-                WriteHexByte(b3, dest.Slice(7, 2));
-                return 9;
-            }
+                {
+                    var b1 = (byte)(0b1110_0000 | codePoint >> 12);
+                    var b2 = (byte)(0b1000_0000 | codePoint >> 6 & 0b0011_1111);
+                    var b3 = (byte)(0b1000_0000 | codePoint & 0b0011_1111);
+                    dest[0] = '%';
+                    WriteHexByte(b1, dest.Slice(1, 2));
+                    dest[3] = '%';
+                    WriteHexByte(b2, dest.Slice(4, 2));
+                    dest[6] = '%';
+                    WriteHexByte(b3, dest.Slice(7, 2));
+                    return 9;
+                }
 
             default:
-            {
-                var b1 = (byte)(0b1111_0000 | codePoint >> 18);
-                var b2 = (byte)(0b1000_0000 | codePoint >> 12 & 0b0011_1111);
-                var b3 = (byte)(0b1000_0000 | codePoint >> 6 & 0b0011_1111);
-                var b4 = (byte)(0b1000_0000 | codePoint & 0b0011_1111);
-                dest[0] = '%';
-                WriteHexByte(b1, dest.Slice(1, 2));
-                dest[3] = '%';
-                WriteHexByte(b2, dest.Slice(4, 2));
-                dest[6] = '%';
-                WriteHexByte(b3, dest.Slice(7, 2));
-                dest[9] = '%';
-                WriteHexByte(b4, dest.Slice(10, 2));
-                return 12;
-            }
+                {
+                    var b1 = (byte)(0b1111_0000 | codePoint >> 18);
+                    var b2 = (byte)(0b1000_0000 | codePoint >> 12 & 0b0011_1111);
+                    var b3 = (byte)(0b1000_0000 | codePoint >> 6 & 0b0011_1111);
+                    var b4 = (byte)(0b1000_0000 | codePoint & 0b0011_1111);
+                    dest[0] = '%';
+                    WriteHexByte(b1, dest.Slice(1, 2));
+                    dest[3] = '%';
+                    WriteHexByte(b2, dest.Slice(4, 2));
+                    dest[6] = '%';
+                    WriteHexByte(b3, dest.Slice(7, 2));
+                    dest[9] = '%';
+                    WriteHexByte(b4, dest.Slice(10, 2));
+                    return 12;
+                }
         }
     }
 
