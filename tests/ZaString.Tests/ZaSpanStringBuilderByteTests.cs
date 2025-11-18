@@ -7,10 +7,10 @@ namespace ZaString.Tests;
 public class ZaSpanStringBuilderByteTests
 {
     [Fact]
-    public void AsByteSpan_Empty_ReturnsEmpty()
+    public void AsRawBytes_Empty_ReturnsEmpty()
     {
         var builder = ZaSpanStringBuilder.Create(Span<char>.Empty);
-        var bytes = builder.AsByteSpan();
+        var bytes = builder.AsRawBytes();
         Assert.True(bytes.IsEmpty);
         Assert.Equal(0, bytes.Length);
     }
@@ -29,7 +29,7 @@ public class ZaSpanStringBuilderByteTests
     [InlineData("é")]
     [InlineData("漢字")]
     [InlineData("🐱")] // surrogate pair
-    public void AsByteSpan_ContentsMatchUnderlyingChars(string value)
+    public void AsRawBytes_ContentsMatchUnderlyingChars(string value)
     {
         var buffer = new char[value.Length];
         var builder = ZaSpanStringBuilder.Create(buffer);
@@ -37,7 +37,7 @@ public class ZaSpanStringBuilderByteTests
 
         var spanChars = builder.AsSpan();
         var expectedBytes = MemoryMarshal.AsBytes(spanChars);
-        var actualBytes = builder.AsByteSpan();
+        var actualBytes = builder.AsRawBytes();
 
         Assert.Equal(expectedBytes.Length, actualBytes.Length);
         Assert.True(expectedBytes.SequenceEqual(actualBytes));

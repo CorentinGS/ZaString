@@ -1,6 +1,7 @@
 ﻿using System.Diagnostics;
 using System.Runtime.CompilerServices;
 using System.Runtime.InteropServices;
+using System.Text;
 
 namespace ZaString.Core;
 
@@ -172,11 +173,34 @@ public ref struct ZaSpanStringBuilder
     /// </summary>
     /// <remarks>
     ///     The resulting bytes are the raw in-memory representation of the <see cref="char" /> data (UTF-16 code units),
-    ///     not an encoded form like UTF-8. Use higher-level encoding APIs if you need UTF-8 bytes.
+    ///     not an encoded form like UTF-8. Use <see cref="TryCopyToUtf8"/> or <see cref="ToUtf8Array"/> if you need UTF-8 bytes.
     /// </remarks>
-    public readonly ReadOnlySpan<byte> AsByteSpan()
+    public readonly ReadOnlySpan<byte> AsRawBytes()
     {
         return MemoryMarshal.AsBytes(WrittenSpan);
+    }
+
+    /// <summary>
+    ///     Encodes the built content into UTF-8 and writes it to the provided destination span.
+    /// </summary>
+    /// <param name="destination">The span to write the UTF-8 bytes to.</param>
+    /// <param name="bytesWritten">When this method returns, contains the number of bytes written to <paramref name="destination"/>.</param>
+    /// <returns><c>true</c> if the conversion was successful; otherwise, <c>false</c>.</returns>
+    public readonly bool TryCopyToUtf8(Span<byte> destination, out int bytesWritten)
+    {
+        return Encoding.UTF8.TryGetBytes(WrittenSpan, destination, out bytesWritten);
+    }
+
+    /// <summary>
+    ///     Encodes the built content into a new UTF-8 byte array.
+    /// </summary>
+    /// <returns>A new byte array containing the UTF-8 encoded characters.</returns>
+    public readonly byte[] ToUtf8Array()
+    {
+        var byteCount = Encoding.UTF8.GetByteCount(WrittenSpan);
+        var bytes = new byte[byteCount];
+        Encoding.UTF8.GetBytes(WrittenSpan, bytes);
+        return bytes;
     }
 
     /// <summary>
