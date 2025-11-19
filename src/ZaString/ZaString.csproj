@@ -21,8 +21,8 @@
         <Deterministic>true</Deterministic>
         <ContinuousIntegrationBuild>true</ContinuousIntegrationBuild>
         <AllowUnsafeBlocks>true</AllowUnsafeBlocks>
-        <Version>0.2.1</Version>
-        <PackageVersion>0.2.1</PackageVersion>
+        <Version>0.2.6</Version>
+        <PackageVersion>0.2.6</PackageVersion>
         <MinVerSkip>true</MinVerSkip>
 
         <!-- MinVer configuration -->
