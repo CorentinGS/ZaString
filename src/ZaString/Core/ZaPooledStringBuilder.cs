@@ -1,5 +1,6 @@
 using System.Buffers;
 using System.Globalization;
+using System.Text;
 
 namespace ZaString.Core;
 
@@ -136,5 +137,48 @@ public sealed class ZaPooledStringBuilder : IDisposable
         }
 
         return AppendLine();
+    }
+
+    public ZaUtf8Handle ToUtf8NullTerminated()
+    {
+        var span = AsSpan();
+        var byteCount = Encoding.UTF8.GetByteCount(span);
+
+        var bytePool = ArrayPool<byte>.Shared;
+        var byteBuffer = bytePool.Rent(byteCount + 1);
+
+        Encoding.UTF8.TryGetBytes(span, byteBuffer, out var bytesWritten);
+        byteBuffer[bytesWritten] = 0; // Null terminate
+
+        return new ZaUtf8Handle(byteBuffer, bytesWritten + 1, bytePool);
+    }
+
+    public bool TryToUtf8NullTerminated(Span<byte> destination, out int bytesWritten)
+    {
+        var span = AsSpan();
+        var byteCount = Encoding.UTF8.GetByteCount(span);
+        var required = byteCount + 1;
+
+        if (destination.Length < required)
+        {
+            bytesWritten = 0;
+            return false;
+        }
+
+        Encoding.UTF8.TryGetBytes(span, destination, out bytesWritten);
+        destination[bytesWritten] = 0; // Null terminate
+        bytesWritten++; // Include null terminator in count
+        return true;
+    }
+
+    public unsafe bool TryToUtf8NullTerminated(byte* buffer, int length, out int bytesWritten)
+    {
+        if (buffer == null)
+        {
+            bytesWritten = 0;
+            return false;
+        }
+
+        return TryToUtf8NullTerminated(new Span<byte>(buffer, length), out bytesWritten);
     }
 }

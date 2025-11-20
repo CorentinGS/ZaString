@@ -1,4 +1,5 @@
-﻿using System.Diagnostics;
+﻿using System.Buffers;
+using System.Diagnostics;
 using System.Runtime.CompilerServices;
 using System.Runtime.InteropServices;
 using System.Text;
@@ -244,5 +245,46 @@ public ref struct ZaSpanStringBuilder
         var byteSpan = MemoryMarshal.AsBytes(WrittenSpan);
         ref var r = ref MemoryMarshal.GetReference(byteSpan);
         return (byte*)Unsafe.AsPointer(ref r);
+    }
+
+    public readonly ZaUtf8Handle ToUtf8NullTerminated()
+    {
+        var byteCount = Encoding.UTF8.GetByteCount(WrittenSpan);
+
+        var bytePool = ArrayPool<byte>.Shared;
+        var byteBuffer = bytePool.Rent(byteCount + 1);
+
+        Encoding.UTF8.TryGetBytes(WrittenSpan, byteBuffer, out var bytesWritten);
+        byteBuffer[bytesWritten] = 0; // Null terminate
+
+        return new ZaUtf8Handle(byteBuffer, bytesWritten + 1, bytePool);
+    }
+
+    public readonly bool TryToUtf8NullTerminated(Span<byte> destination, out int bytesWritten)
+    {
+        var byteCount = Encoding.UTF8.GetByteCount(WrittenSpan);
+        var required = byteCount + 1;
+
+        if (destination.Length < required)
+        {
+            bytesWritten = 0;
+            return false;
+        }
+
+        Encoding.UTF8.TryGetBytes(WrittenSpan, destination, out bytesWritten);
+        destination[bytesWritten] = 0; // Null terminate
+        bytesWritten++; // Include null terminator in count
+        return true;
+    }
+
+    public unsafe readonly bool TryToUtf8NullTerminated(byte* buffer, int length, out int bytesWritten)
+    {
+        if (buffer == null)
+        {
+            bytesWritten = 0;
+            return false;
+        }
+
+        return TryToUtf8NullTerminated(new Span<byte>(buffer, length), out bytesWritten);
     }
 }

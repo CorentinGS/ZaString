@@ -1,16 +1,14 @@
 using System.Text;
 using ZaString.Core;
-using ZaString.Extensions;
 
 namespace ZaString.Tests;
 
-public class ZaSpanStringBuilderUtf8Tests
+public class ZaPooledStringBuilderUtf8Tests
 {
     [Fact]
     public void ToUtf8NullTerminated_ReturnsCorrectBytes()
     {
-        Span<char> buffer = stackalloc char[128];
-        var builder = ZaSpanStringBuilder.Create(buffer);
+        using var builder = ZaPooledStringBuilder.Rent();
         builder.Append("Hello World");
 
         using var handle = builder.ToUtf8NullTerminated();
@@ -26,8 +24,7 @@ public class ZaSpanStringBuilderUtf8Tests
     [Fact]
     public void ToUtf8NullTerminated_EmptyString_ReturnsNullTerminatorOnly()
     {
-        Span<char> buffer = stackalloc char[128];
-        var builder = ZaSpanStringBuilder.Create(buffer);
+        using var builder = ZaPooledStringBuilder.Rent();
 
         using var handle = builder.ToUtf8NullTerminated();
         var span = handle.Span;
@@ -39,12 +36,19 @@ public class ZaSpanStringBuilderUtf8Tests
     [Fact]
     public void ToUtf8NullTerminated_SpecialCharacters_ReturnsCorrectBytes()
     {
-        Span<char> buffer = stackalloc char[128];
-        var builder = ZaSpanStringBuilder.Create(buffer);
+        using var builder = ZaPooledStringBuilder.Rent();
         builder.Append("Héllo Wörld €");
 
         using var handle = builder.ToUtf8NullTerminated();
         var span = handle.Span;
+
+        // "Héllo Wörld €"
+        // é is 2 bytes (C3 A9)
+        // ö is 2 bytes (C3 B6)
+        // € is 3 bytes (E2 82 AC)
+        // H, l, l, o,  , W, r, l, d,  are 1 byte each (10 chars)
+        // Total bytes = 10 + 2 + 2 + 3 = 17 bytes
+        // + 1 null terminator = 18 bytes
 
         Assert.Equal(18, span.Length);
         Assert.Equal(0, span[17]);
@@ -56,8 +60,7 @@ public class ZaSpanStringBuilderUtf8Tests
     [Fact]
     public void TryToUtf8NullTerminated_WritesToBuffer_WhenBufferIsLargeEnough()
     {
-        Span<char> charBuffer = stackalloc char[128];
-        var builder = ZaSpanStringBuilder.Create(charBuffer);
+        using var builder = ZaPooledStringBuilder.Rent();
         builder.Append("Hello");
 
         Span<byte> buffer = stackalloc byte[10];
@@ -76,8 +79,7 @@ public class ZaSpanStringBuilderUtf8Tests
     [Fact]
     public void TryToUtf8NullTerminated_ReturnsFalse_WhenBufferIsTooSmall()
     {
-        Span<char> charBuffer = stackalloc char[128];
-        var builder = ZaSpanStringBuilder.Create(charBuffer);
+        using var builder = ZaPooledStringBuilder.Rent();
         builder.Append("Hello");
 
         Span<byte> buffer = stackalloc byte[5]; // Too small (needs 6)
@@ -90,8 +92,7 @@ public class ZaSpanStringBuilderUtf8Tests
     [Fact]
     public unsafe void TryToUtf8NullTerminated_WritesToPointer_WhenBufferIsLargeEnough()
     {
-        Span<char> charBuffer = stackalloc char[128];
-        var builder = ZaSpanStringBuilder.Create(charBuffer);
+        using var builder = ZaPooledStringBuilder.Rent();
         builder.Append("Hello");
 
         Span<byte> buffer = stackalloc byte[10];
@@ -104,5 +105,22 @@ public class ZaSpanStringBuilderUtf8Tests
             Assert.Equal((byte)'H', buffer[0]);
             Assert.Equal(0, buffer[5]);
         }
+    }
+
+    [Fact]
+    public unsafe void ZaUtf8Handle_Pointer_ReturnsValidPointer()
+    {
+        using var builder = ZaPooledStringBuilder.Rent();
+        builder.Append("Test");
+
+        using var handle = builder.ToUtf8NullTerminated();
+        var ptr = handle.Pointer;
+
+        Assert.True(ptr != null);
+        Assert.Equal((byte)'T', *ptr);
+        Assert.Equal((byte)'e', *(ptr + 1));
+        Assert.Equal((byte)'s', *(ptr + 2));
+        Assert.Equal((byte)'t', *(ptr + 3));
+        Assert.Equal(0, *(ptr + 4));
     }
 }
