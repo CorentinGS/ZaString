@@ -1,41 +1,49 @@
 # ZaString
 
+![ZaString logo](assets/logo.png)
+
 [![.NET](https://github.com/CorentinGS/ZaString/actions/workflows/ci.yml/badge.svg)](https://github.com/CorentinGS/ZaString/actions/workflows/ci.yml)
 [![NuGet](https://img.shields.io/nuget/v/ZaString.svg)](https://www.nuget.org/packages/ZaString)
 [![License](https://img.shields.io/badge/license-MIT-blue.svg)](LICENSE)
 
-**ZaString** is a high-performance, zero-allocation string manipulation library for C# that uses `Span<T>` and
-`ReadOnlySpan<T>` for optimal memory efficiency. Built for .NET 9.0+, it provides a fluent API for building strings
-without heap allocations.
+ZaString is a high-performance, zero-allocation string toolbox for modern .NET applications. It provides stack-first,
+Span-based builders and helpers so you can assemble, format and encode strings with predictable, allocation-free
+performance.
 
-## 🚀 Key Features
+## 🚀 Why ZaString?
 
-- **Zero Allocation**: Stack-based string building with no heap allocations
-- **High Performance**: Significantly faster than traditional `StringBuilder`
-- **Fluent API**: Chainable methods for intuitive string construction
-- **Type Safety**: Full support for `ISpanFormattable` types with formatting
-- **Memory Efficient**: Uses stack-allocated buffers with precise capacity control
-- **UTF-8 Support**: Built-in UTF-8 writer for byte-level operations
-- **Escape Helpers**: JSON, HTML, CSV, and URL encoding utilities
-- **Interpolation Support**: Custom interpolated string handlers
+ZaString is built for scenarios where every allocation matters. If you're writing high-frequency, low-latency
+services, middleware, or hotspots that produce a lot of transient strings (logging, serialization, templating),
+ZaString helps keep GC pressure low while staying familiar and idiomatic to C# developers.
+
+Key highlights:
+
+- **Zero allocation**: Stack-first, Span-backed APIs avoid ephemeral heap allocations
+- **High performance**: Faster than standard `StringBuilder` in many scenarios (see benchmarks)
+- **Fluent ergonomic API**: Chainable methods for simple building and complex formatting
+- **UTF‑8 support**: Write bytes directly when you need to emit UTF‑8
+- **Escape helpers**: Ready-to-use JSON, HTML, CSV, URL escaping utilities
+- **Interpolated string handlers**: Integrates with C# interpolation for zero-cost formatting
 
 ## 📦 Installation
+
+Install from NuGet:
 
 ```bash
 dotnet add package ZaString
 ```
 
-## 🎯 Quick Start
+## 🎯 Quick start
 
 ```csharp
 using ZaString.Core;
 using ZaString.Extensions;
 
-// Create a stack-allocated buffer
+// Create a stack-allocated buffer and a builder
 Span<char> buffer = stackalloc char[100];
 var builder = ZaSpanStringBuilder.Create(buffer);
 
-// Build strings with fluent API
+// Build strings with a fluent, zero-allocation API
 builder.Append("Hello, ")
        .Append("World!")
        .Append(" Number: ")
@@ -43,14 +51,13 @@ builder.Append("Hello, ")
        .Append(" Pi: ")
        .Append(Math.PI, "F2");
 
-// Access result as span (zero allocation)
-var result = builder.AsSpan();
-Console.WriteLine(result); // "Hello, World! Number: 42 Pi: 3.14"
+var spanResult = builder.AsSpan(); // zero-allocation read-only span
+Console.WriteLine(spanResult.ToString()); // prints: Hello, World! Number: 42 Pi: 3.14
 ```
 
-## 🔧 Core Components
+## 🔧 Core components
 
-### ZaSpanStringBuilder
+### ZaSpanStringBuilder (stack-first builder)
 
 The main string builder that writes directly to a provided `Span<char>`:
 
@@ -69,7 +76,7 @@ builder.Append("User: ")
 var userInfo = builder.AsSpan();
 ```
 
-### ZaPooledStringBuilder
+### ZaPooledStringBuilder (pooled/heap-backed builder)
 
 For scenarios requiring heap allocation with automatic buffer management:
 
@@ -97,7 +104,7 @@ writer.Append("Hello, UTF-8 World!")
 var utf8Bytes = writer.AsSpan();
 ```
 
-## 🎨 Advanced Features
+## 🎨 Advanced features
 
 ### String Interpolation
 
@@ -182,8 +189,8 @@ else
 
 ## 📊 Performance
 
-ZaString significantly outperforms traditional string building approaches. Here are the actual benchmark results from
-comprehensive testing:
+ZaString significantly outperforms traditional string-building approaches. See the benchmark results below and in
+the `tests/ZaString.Benchmarks` project for details.
 
 ### Basic String Building Performance
 
@@ -297,19 +304,18 @@ var result = builder.AsSpan(); // Zero allocation
 - `AppendPathSegment()` - URL path building
 - `AppendQueryParam()` - URL query parameter building
 
-## 🧪 Testing
+## 🧪 Testing & benchmarks
 
-Run the comprehensive test suite:
+Run the full unit tests:
 
 ```bash
 dotnet test
 ```
 
-Run performance benchmarks:
+Run performance benchmarks (Release):
 
 ```bash
-cd tests/ZaString.Benchmarks
-dotnet run -c Release
+dotnet run --project tests/ZaString.Benchmarks -c Release
 ```
 
 ## 📝 Examples
@@ -333,4 +339,4 @@ This project is licensed under the MIT License - see the [LICENSE](LICENSE) file
 
 ---
 
-**Made with ❤️ for high-performance .NET applications** 
+Made with ❤️ for high-performance .NET applications
