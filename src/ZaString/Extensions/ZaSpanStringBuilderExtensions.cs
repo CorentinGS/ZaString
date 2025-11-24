@@ -452,6 +452,49 @@ public static class ZaSpanStringBuilderExtensions
     }
 
     /// <summary>
+    ///     Attempts to append a formatted string using a composite format string.
+    ///     This method avoids intermediate string allocations by writing directly to the span.
+    /// </summary>
+    public static bool TryAppendFormat(ref this ZaSpanStringBuilder builder, System.Text.CompositeFormat format, params object?[] args)
+    {
+        return builder.TryAppendFormat(null, format, args);
+    }
+
+    /// <summary>
+    ///     Attempts to append a formatted string using a composite format string and a specific format provider.
+    ///     This method avoids intermediate string allocations by writing directly to the span.
+    /// </summary>
+    public static bool TryAppendFormat(ref this ZaSpanStringBuilder builder, IFormatProvider? provider, System.Text.CompositeFormat format, params object?[] args)
+    {
+        if (builder.RemainingSpan.TryWrite(provider, format, out var charsWritten, args))
+        {
+            builder.Advance(charsWritten);
+            return true;
+        }
+        return false;
+    }
+
+    /// <summary>
+    ///     Appends a formatted string using a composite format string.
+    /// </summary>
+    public static ref ZaSpanStringBuilder AppendFormat(ref this ZaSpanStringBuilder builder, System.Text.CompositeFormat format, params object?[] args)
+    {
+        return ref builder.AppendFormat(null, format, args);
+    }
+
+    /// <summary>
+    ///     Appends a formatted string using a composite format string and a specific format provider.
+    /// </summary>
+    public static ref ZaSpanStringBuilder AppendFormat(ref this ZaSpanStringBuilder builder, IFormatProvider? provider, System.Text.CompositeFormat format, params object?[] args)
+    {
+        if (!builder.TryAppendFormat(provider, format, args))
+        {
+            ThrowOutOfRangeException();
+        }
+        return ref builder;
+    }
+
+    /// <summary>
     ///     Appends the default line terminator to the builder.
     /// </summary>
     /// <param name="builder">The builder instance.</param>
@@ -569,6 +612,13 @@ public static class ZaSpanStringBuilderExtensions
 
     // Escaping helpers
 
+    /// <summary>
+    ///     Appends a JSON-escaped string.
+    ///     <para>
+    ///         This method uses a two-pass approach: first it calculates the required length, then it writes the escaped content.
+    ///         This avoids intermediate allocations and ensures the buffer is only modified if there is enough space.
+    ///     </para>
+    /// </summary>
     public static ref ZaSpanStringBuilder AppendJsonEscaped(ref this ZaSpanStringBuilder builder, ReadOnlySpan<char> value)
     {
         if (!TryAppendJsonEscaped(ref builder, value))
@@ -690,6 +740,12 @@ public static class ZaSpanStringBuilderExtensions
         dest[1] = hex[b & 0xF];
     }
 
+    /// <summary>
+    ///     Appends an HTML-escaped string.
+    ///     <para>
+    ///         This method uses a two-pass approach to ensure zero allocation and atomic writes (either all or nothing).
+    ///     </para>
+    /// </summary>
     public static ref ZaSpanStringBuilder AppendHtmlEscaped(ref this ZaSpanStringBuilder builder, ReadOnlySpan<char> value)
     {
         if (!TryAppendHtmlEscaped(ref builder, value))
@@ -846,6 +902,13 @@ public static class ZaSpanStringBuilderExtensions
         return c is >= 'A' and <= 'Z' or >= 'a' and <= 'z' or >= '0' and <= '9' or '-' or '_' or '.' or '~';
     }
 
+    /// <summary>
+    ///     Appends a URL-encoded string.
+    ///     <para>
+    ///         This method uses a two-pass approach to ensure zero allocation and atomic writes.
+    ///         It handles UTF-8 percent encoding of non-ASCII characters and surrogates.
+    ///     </para>
+    /// </summary>
     public static ref ZaSpanStringBuilder AppendUrlEncoded(ref this ZaSpanStringBuilder builder, ReadOnlySpan<char> value)
     {
         if (!TryAppendUrlEncoded(ref builder, value))

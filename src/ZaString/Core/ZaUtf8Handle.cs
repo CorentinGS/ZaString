@@ -35,10 +35,10 @@ public struct ZaUtf8Handle : IDisposable
 
     /// <summary>
     ///     Gets a pointer to the underlying buffer.
-    ///     WARNING: This pointer is valid only as long as the handle is not disposed and the underlying array is pinned (if needed).
-    ///     Since this uses pooled arrays, they are pinned by default in modern .NET during usage if not moved, but exercise caution.
-    ///     Actually, standard arrays are NOT pinned. Users should pin if they need a stable pointer for async/external calls.
-    ///     For immediate synchronous usage (like ImGui), it is usually fine.
+    ///     WARNING: This pointer is valid only as long as the handle is not disposed.
+    ///     The underlying array is NOT pinned by default.
+    ///     Users MUST pin the array (e.g. using <see cref="Memory{T}.Pin"/> or <see cref="GCHandle"/>) if they need a stable pointer for async/external calls that might trigger GC.
+    ///     For immediate synchronous usage (like ImGui) within a fixed statement or while the array is known to be reachable and not moving, it might be safe, but exercise extreme caution.
     /// </summary>
     public readonly unsafe byte* Pointer
     {

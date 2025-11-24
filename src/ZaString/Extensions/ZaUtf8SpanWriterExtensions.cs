@@ -11,6 +11,8 @@ namespace ZaString.Extensions;
 /// </summary>
 public static class ZaUtf8SpanWriterExtensions
 {
+    private static readonly byte[] NewLineBytes = Encoding.UTF8.GetBytes(Environment.NewLine);
+
     public static ref ZaUtf8SpanWriter Append(ref this ZaUtf8SpanWriter writer, ReadOnlySpan<byte> value)
     {
         if (value.Length > writer.RemainingSpan.Length)
@@ -133,7 +135,7 @@ public static class ZaUtf8SpanWriterExtensions
 
     public static ref ZaUtf8SpanWriter AppendLine(ref this ZaUtf8SpanWriter writer)
     {
-        return ref writer.Append(Encoding.UTF8.GetBytes(Environment.NewLine));
+        return ref writer.Append(NewLineBytes);
     }
 
     public static ref ZaUtf8SpanWriter AppendLine(ref this ZaUtf8SpanWriter writer, string? value)

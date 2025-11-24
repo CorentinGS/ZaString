@@ -304,6 +304,30 @@ var result = builder.AsSpan(); // Zero allocation
 - `AppendPathSegment()` - URL path building
 - `AppendQueryParam()` - URL query parameter building
 
+## 🛡️ Best Practices & Advanced Usage
+
+### Ref Struct Limitations
+
+`ZaSpanStringBuilder` and `ZaUtf8SpanWriter` are `ref struct` types. This means they:
+
+- Cannot be boxed (cast to `object` or interface).
+- Cannot be fields of a class (only other `ref struct`s).
+- Cannot be used in `async` methods across `await` points.
+- Are designed for short-lived, stack-based operations.
+
+### Disposal & Pooling
+
+- **ZaPooledStringBuilder**: Always use `using` or call `Dispose()` to return the internal buffer to the `ArrayPool`. Failure to do so will lead to memory leaks in the pool.
+- **ZaUtf8Handle**: This struct wraps a pooled array. You **MUST** call `Dispose()` when finished. Avoid copying this struct around, as multiple disposals of the same handle can corrupt the pool.
+
+### Unsafe Pointers
+
+`ZaUtf8Handle.Pointer` provides raw access to the underlying buffer.
+
+- **Warning**: The underlying array is **NOT** pinned by default.
+- If you need a stable pointer for external calls (P/Invoke) or async operations, you must pin the array manually (e.g., using `fixed` or `GCHandle`).
+- Accessing the pointer after disposal is undefined behavior.
+
 ## 🧪 Testing & benchmarks
 
 Run the full unit tests:
