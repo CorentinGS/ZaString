@@ -296,7 +296,6 @@ public sealed class ZaPooledStringBuilder : IDisposable
             bytesWritten = 0;
             return false;
         }
-
         if (buffer == null)
         {
             bytesWritten = 0;
