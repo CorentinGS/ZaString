@@ -24,7 +24,6 @@ public class ZaSpanStringBuilderUrlHelpersTests
 
         builder.AppendUrlEncoded("a b/€");
 
-        // space -> %20, slash -> %2F, Euro (UTF-8: E2 82 AC) -> %E2%82%AC
         Assert.Equal("a%20b%2F%E2%82%AC", builder.AsSpan());
     }
 
@@ -80,6 +79,28 @@ public class ZaSpanStringBuilderUrlHelpersTests
 
         Assert.Equal("/search?q=existing&page=1", builder.AsSpan());
         Assert.False(isFirst);
+    }
+
+    [Fact]
+    public void AppendQueryParam_WithRefBool_Failure_IsAtomic()
+    {
+        Span<char> buffer = stackalloc char[8];
+        var builder = ZaSpanStringBuilder.Create(buffer);
+        builder.Append("/s");
+
+        var isFirst = true;
+
+        try
+        {
+            builder.AppendQueryParam("longkey", "x", ref isFirst);
+            Assert.Fail("Expected ArgumentOutOfRangeException");
+        }
+        catch (ArgumentOutOfRangeException)
+        {
+        }
+
+        Assert.Equal("/s", builder.AsSpan());
+        Assert.True(isFirst);
     }
 
     [Fact]

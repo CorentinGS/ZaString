@@ -117,7 +117,7 @@ public static class ZaSpanStringBuilderExtensions
             ThrowOutOfRangeException();
         }
 
-        builder.Advance(-count);
+        builder.SetLength(builder.Length - count);
         return ref builder;
     }
 
@@ -1220,6 +1220,67 @@ public static class ZaSpanStringBuilderExtensions
         }
     }
 
+    private static int WriteUrlEncoded(ReadOnlySpan<char> value, Span<char> dest)
+    {
+        var w = 0;
+        for (var i = 0; i < value.Length; i++)
+        {
+            var c = value[i];
+            if (c <= 0x7F)
+            {
+                if (IsUnreservedAscii(c))
+                {
+                    dest[w++] = c;
+                }
+                else
+                {
+                    dest[w++] = '%';
+                    WriteHexByte((byte)c, dest.Slice(w, 2));
+                    w += 2;
+                }
+            }
+            else if (char.IsHighSurrogate(c) && i + 1 < value.Length && char.IsLowSurrogate(value[i + 1]))
+            {
+                var low = value[++i];
+                var codePoint = 0x10000 + (c - 0xD800 << 10 | low - 0xDC00);
+                w += PercentEncodeUtf8FromCodePoint(codePoint, dest[w..]);
+            }
+            else
+            {
+                var codePoint = (int)c;
+                w += PercentEncodeUtf8FromCodePoint(codePoint, dest[w..]);
+            }
+        }
+
+        return w;
+    }
+
+    private static int GetQueryParamLength(ReadOnlySpan<char> key, ReadOnlySpan<char> value, bool urlEncode)
+    {
+        var keyLength = urlEncode ? GetUrlEncodedLength(key) : key.Length;
+        var valueLength = urlEncode ? GetUrlEncodedLength(value) : value.Length;
+        return 1 + keyLength + 1 + valueLength;
+    }
+
+    private static void WriteQueryParam(Span<char> destination, char prefix, ReadOnlySpan<char> key, ReadOnlySpan<char> value, bool urlEncode)
+    {
+        destination[0] = prefix;
+        var written = 1;
+
+        if (urlEncode)
+        {
+            written += WriteUrlEncoded(key, destination[written..]);
+            destination[written++] = '=';
+            written += WriteUrlEncoded(value, destination[written..]);
+            return;
+        }
+
+        key.CopyTo(destination[written..]);
+        written += key.Length;
+        destination[written++] = '=';
+        value.CopyTo(destination[written..]);
+    }
+
     public static ref ZaSpanStringBuilder AppendPathSegment(ref this ZaSpanStringBuilder builder, ReadOnlySpan<char> segment, char separator = '/')
     {
         if (builder.Length > 0 && builder[^1] != separator)
@@ -1240,40 +1301,28 @@ public static class ZaSpanStringBuilderExtensions
 
     public static ref ZaSpanStringBuilder AppendQueryParam(ref this ZaSpanStringBuilder builder, ReadOnlySpan<char> key, ReadOnlySpan<char> value, bool urlEncode = true, bool isFirst = false)
     {
-        builder.Append(isFirst ? '?' : '&');
-        if (urlEncode)
+        var required = GetQueryParamLength(key, value, urlEncode);
+        if (required > builder.RemainingSpan.Length)
         {
-            builder.AppendUrlEncoded(key);
-            builder.Append('=');
-            builder.AppendUrlEncoded(value);
-        }
-        else
-        {
-            builder.Append(key);
-            builder.Append('=');
-            builder.Append(value);
+            ThrowOutOfRangeException();
         }
 
+        WriteQueryParam(builder.RemainingSpan, isFirst ? '?' : '&', key, value, urlEncode);
+        builder.Advance(required);
         return ref builder;
     }
 
     public static ref ZaSpanStringBuilder AppendQueryParam(ref this ZaSpanStringBuilder builder, ReadOnlySpan<char> key, ReadOnlySpan<char> value, ref bool isFirst, bool urlEncode = true)
     {
-        builder.Append(isFirst ? '?' : '&');
-        isFirst = false;
-        if (urlEncode)
+        var required = GetQueryParamLength(key, value, urlEncode);
+        if (required > builder.RemainingSpan.Length)
         {
-            builder.AppendUrlEncoded(key);
-            builder.Append('=');
-            builder.AppendUrlEncoded(value);
-        }
-        else
-        {
-            builder.Append(key);
-            builder.Append('=');
-            builder.Append(value);
+            ThrowOutOfRangeException();
         }
 
+        WriteQueryParam(builder.RemainingSpan, isFirst ? '?' : '&', key, value, urlEncode);
+        builder.Advance(required);
+        isFirst = false;
         return ref builder;
     }
 
