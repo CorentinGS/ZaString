@@ -26,6 +26,30 @@ public readonly struct FailingFormattable : ISpanFormattable
     }
 }
 
+file sealed class LimitedArrayPool : ArrayPool<char>
+{
+    private readonly int _maxCapacity;
+
+    public LimitedArrayPool(int maxCapacity)
+    {
+        _maxCapacity = maxCapacity;
+    }
+
+    public override char[] Rent(int minimumLength)
+    {
+        if (minimumLength > _maxCapacity)
+        {
+            throw new InvalidOperationException("Pool capacity exceeded");
+        }
+
+        return new char[minimumLength];
+    }
+
+    public override void Return(char[] array, bool clearArray = false)
+    {
+    }
+}
+
 file sealed class ThrowingArrayPool : ArrayPool<char>
 {
     private int _rentCount;
@@ -43,6 +67,25 @@ file sealed class ThrowingArrayPool : ArrayPool<char>
     public override void Return(char[] array, bool clearArray = false)
     {
     }
+}
+
+
+public readonly struct LargeFormattable : ISpanFormattable
+{
+    public bool TryFormat(Span<char> destination, out int charsWritten, ReadOnlySpan<char> format, IFormatProvider? provider)
+    {
+        if (destination.Length < 2_000_000)
+        {
+            charsWritten = 0;
+            return false;
+        }
+
+        "big".AsSpan().CopyTo(destination);
+        charsWritten = 3;
+        return true;
+    }
+
+    public string ToString(string? format, IFormatProvider? formatProvider) => "big";
 }
 
 public class ZaPooledStringBuilderTests
@@ -367,13 +410,13 @@ public class ZaPooledStringBuilderTests
     }
 
     [Fact]
-    public void Append_FailingISpanFormattable_ThrowsInvalidOperationException()
+    public void Append_FailingISpanFormattable_ThrowsWhenPoolExhausted()
     {
-        using var builder = ZaPooledStringBuilder.Rent(4);
+        var pool = new LimitedArrayPool(1024);
+        using var builder = ZaPooledStringBuilder.Rent(4, pool);
         var failingValue = new FailingFormattable();
 
-        var ex = Assert.Throws<InvalidOperationException>(() => builder.Append(failingValue));
-        Assert.Equal("ISpanFormattable.TryFormat consistently failed", ex.Message);
+        Assert.Throws<InvalidOperationException>(() => builder.Append(failingValue));
     }
 
     [Fact]
@@ -633,5 +676,15 @@ public class ZaPooledStringBuilderTests
         Assert.Throws<ObjectDisposedException>(() => builder.TryAppend("x"));
         Assert.Throws<ObjectDisposedException>(() => builder.TryAppend('x'));
         Assert.Throws<ObjectDisposedException>(() => builder.TryAppend("x".AsSpan()));
+    }
+
+    [Fact]
+    public void Append_LargeISpanFormattable_GrowsUntilItSucceeds()
+    {
+        using var builder = ZaPooledStringBuilder.Rent(4);
+
+        builder.Append(new LargeFormattable());
+
+        Assert.Equal("big", builder.ToString());
     }
 }

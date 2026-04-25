@@ -219,13 +219,11 @@ public sealed class ZaPooledStringBuilder : IDisposable
         return Append(value ? "true" : "false");
     }
 
-    private const int MaxFormatRetries = 16;
-
     public ZaPooledStringBuilder Append<T>(T value, ReadOnlySpan<char> format = default, IFormatProvider? provider = null) where T : ISpanFormattable
     {
         ThrowIfDisposed();
         provider ??= CultureInfo.InvariantCulture;
-        int retries = 0;
+
         while (true)
         {
             if (value.TryFormat(_buffer.AsSpan(Length), out var written, format, provider))
@@ -233,9 +231,6 @@ public sealed class ZaPooledStringBuilder : IDisposable
                 Length += written;
                 return this;
             }
-
-            if (++retries > MaxFormatRetries)
-                throw new InvalidOperationException("ISpanFormattable.TryFormat consistently failed");
 
             var remaining = _buffer.Length - Length;
             var growBy = remaining + 1;

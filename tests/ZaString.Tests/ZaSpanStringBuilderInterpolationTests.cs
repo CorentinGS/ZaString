@@ -321,4 +321,16 @@ public class ZaSpanStringBuilderInterpolationTests
         var handler = new ZaInterpolatedStringHandler(0, 1, ref builder);
         handler.AppendFormatted(3.14159, -6, "F2");
     }
+
+    [Fact]
+    public void Append_InterpolatedString_WithAlignedString_Works()
+    {
+        Span<char> buffer = stackalloc char[32];
+        var builder = ZaSpanStringBuilder.Create(buffer);
+
+        var name = "Ada";
+        builder.Append($"|{name,6}|{name,-6}|");
+
+        Assert.Equal("|   Ada|Ada   |", builder.AsSpan());
+    }
 }

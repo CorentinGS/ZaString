@@ -174,6 +174,53 @@ public ref struct ZaInterpolatedStringHandler
         }
     }
 
+
+    public void AppendFormatted(string? value, int alignment)
+    {
+        AppendAligned(value is null ? ReadOnlySpan<char>.Empty : value.AsSpan(), alignment);
+    }
+
+    public void AppendFormatted(string? value, int alignment, string? format)
+    {
+        AppendAligned(value is null ? ReadOnlySpan<char>.Empty : value.AsSpan(), alignment);
+    }
+
+    public void AppendFormatted(ReadOnlySpan<char> value, int alignment)
+    {
+        AppendAligned(value, alignment);
+    }
+
+    public void AppendFormatted(ReadOnlySpan<char> value, int alignment, string? format)
+    {
+        AppendAligned(value, alignment);
+    }
+
+    private void AppendAligned(ReadOnlySpan<char> value, int alignment)
+    {
+        var width = Math.Abs(alignment);
+        var totalWidth = Math.Max(width, value.Length);
+        var remaining = _builder.RemainingSpan;
+
+        if (remaining.Length < totalWidth)
+        {
+            throw new ArgumentOutOfRangeException("value", "The destination buffer is too small.");
+        }
+
+        var padCount = totalWidth - value.Length;
+        if (alignment > 0)
+        {
+            remaining[..padCount].Fill(' ');
+            value.CopyTo(remaining[padCount..]);
+        }
+        else
+        {
+            value.CopyTo(remaining);
+            remaining.Slice(value.Length, padCount).Fill(' ');
+        }
+
+        _builder.Advance(totalWidth);
+    }
+
     public readonly ZaSpanStringBuilder GetResult()
     {
         return _builder;
