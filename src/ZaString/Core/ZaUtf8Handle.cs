@@ -9,6 +9,18 @@ namespace ZaString.Core;
 ///     A disposable handle for a pooled UTF-8 byte buffer.
 ///     This struct MUST be disposed to return the buffer to the pool.
 /// </summary>
+/// <remarks>
+///     <para>
+///         <see cref="ZaUtf8Handle"/> is a <c>ref struct</c>, which means it is stack-only.
+///         It cannot be boxed, stored in fields of reference types, captured by lambdas or local functions,
+///         used across <c>await</c> or <c>yield</c> boundaries, or passed through generic APIs that require
+///         non-stack storage.
+///     </para>
+///     <para>
+///         Consumers should use this handle only for short-lived, synchronous operations and dispose it before
+///         it goes out of scope.
+///     </para>
+/// </remarks>
 public ref struct ZaUtf8Handle
 {
     private byte[]? _buffer;

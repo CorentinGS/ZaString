@@ -107,7 +107,7 @@ public ref struct ZaSpanStringBuilder
     /// <param name="count">The number of characters written.</param>
     public void Advance(int count)
     {
-        if (count < 0 || Length + count > Capacity)
+        if (count < 0 || count > Capacity - Length)
             throw new ArgumentOutOfRangeException(nameof(count));
         Length += count;
     }
