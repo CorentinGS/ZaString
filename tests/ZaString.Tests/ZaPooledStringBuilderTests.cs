@@ -348,4 +348,170 @@ public class ZaPooledStringBuilderTests
         var ex = Assert.Throws<System.Reflection.TargetInvocationException>(() => ensureCapacity.Invoke(builder, new object[] { int.MaxValue }));
         Assert.IsType<ArgumentOutOfRangeException>(ex.InnerException);
     }
+
+    [Fact]
+    public void SetLength_TruncatesCorrectly()
+    {
+        using var builder = ZaPooledStringBuilder.Rent(4);
+        builder.Append("Hello World");
+        Assert.Equal(11, builder.Length);
+
+        builder.SetLength(5);
+        Assert.Equal(5, builder.Length);
+        Assert.Equal("Hello", builder.ToString());
+    }
+
+    [Fact]
+    public void SetLength_Zero_ClearsContent()
+    {
+        using var builder = ZaPooledStringBuilder.Rent(4);
+        builder.Append("Test");
+        Assert.Equal(4, builder.Length);
+
+        builder.SetLength(0);
+        Assert.Equal(0, builder.Length);
+        Assert.Equal("", builder.ToString());
+    }
+
+    [Fact]
+    public void SetLength_ExceedsLength_ThrowsArgumentOutOfRangeException()
+    {
+        using var builder = ZaPooledStringBuilder.Rent(4);
+        builder.Append("Hi");
+
+        Assert.Throws<ArgumentOutOfRangeException>(() => builder.SetLength(5));
+    }
+
+    [Fact]
+    public void SetLength_Negative_ThrowsArgumentOutOfRangeException()
+    {
+        using var builder = ZaPooledStringBuilder.Rent(4);
+        builder.Append("Hi");
+
+        Assert.Throws<ArgumentOutOfRangeException>(() => builder.SetLength(-1));
+    }
+
+    [Fact]
+    public void RemoveLast_RemovesCorrectCount()
+    {
+        using var builder = ZaPooledStringBuilder.Rent(4);
+        builder.Append("Hello World");
+        Assert.Equal(11, builder.Length);
+
+        builder.RemoveLast(6);
+        Assert.Equal(5, builder.Length);
+        Assert.Equal("Hello", builder.ToString());
+    }
+
+    [Fact]
+    public void RemoveLast_AllCharacters_Clears()
+    {
+        using var builder = ZaPooledStringBuilder.Rent(4);
+        builder.Append("Test");
+
+        builder.RemoveLast(4);
+        Assert.Equal(0, builder.Length);
+        Assert.Equal("", builder.ToString());
+    }
+
+    [Fact]
+    public void RemoveLast_ExceedsLength_ThrowsArgumentOutOfRangeException()
+    {
+        using var builder = ZaPooledStringBuilder.Rent(4);
+        builder.Append("Hi");
+
+        Assert.Throws<ArgumentOutOfRangeException>(() => builder.RemoveLast(5));
+    }
+
+    [Fact]
+    public void RemoveLast_Negative_ThrowsArgumentOutOfRangeException()
+    {
+        using var builder = ZaPooledStringBuilder.Rent(4);
+        builder.Append("Hi");
+
+        Assert.Throws<ArgumentOutOfRangeException>(() => builder.RemoveLast(-1));
+    }
+
+    [Fact]
+    public void Indexer_Get_ReturnsCorrectCharacter()
+    {
+        using var builder = ZaPooledStringBuilder.Rent(4);
+        builder.Append("Hello");
+
+        Assert.Equal('H', builder[0]);
+        Assert.Equal('e', builder[1]);
+        Assert.Equal('o', builder[4]);
+    }
+
+    [Fact]
+    public void Indexer_Get_OutOfRange_ThrowsArgumentOutOfRangeException()
+    {
+        using var builder = ZaPooledStringBuilder.Rent(4);
+        builder.Append("Hi");
+
+        Assert.Throws<ArgumentOutOfRangeException>(() => builder[2]);
+    }
+
+    [Fact]
+    public void Indexer_Set_ModifiesCharacter()
+    {
+        using var builder = ZaPooledStringBuilder.Rent(4);
+        builder.Append("Hello");
+
+        builder[0] = 'J';
+        builder[4] = 'y';
+
+        Assert.Equal("Jelly", builder.ToString());
+    }
+
+    [Fact]
+    public void Indexer_Set_OutOfRange_ThrowsArgumentOutOfRangeException()
+    {
+        using var builder = ZaPooledStringBuilder.Rent(4);
+        builder.Append("Hi");
+
+        Assert.Throws<ArgumentOutOfRangeException>(() => builder[2] = 'x');
+    }
+
+    [Fact]
+    public void TryAppend_ReadOnlySpan_Succeeds()
+    {
+        using var builder = ZaPooledStringBuilder.Rent(4);
+        var ok = builder.TryAppend("Hello".AsSpan());
+
+        Assert.True(ok);
+        Assert.Equal("Hello", builder.ToString());
+    }
+
+    [Fact]
+    public void TryAppend_String_Succeeds()
+    {
+        using var builder = ZaPooledStringBuilder.Rent(4);
+        var ok = builder.TryAppend("Hello");
+
+        Assert.True(ok);
+        Assert.Equal("Hello", builder.ToString());
+    }
+
+    [Fact]
+    public void TryAppend_String_Null_ReturnsTrue_NoChange()
+    {
+        using var builder = ZaPooledStringBuilder.Rent(4);
+        var ok = builder.TryAppend(null);
+
+        Assert.True(ok);
+        Assert.Equal("", builder.ToString());
+        Assert.Equal(0, builder.Length);
+    }
+
+    [Fact]
+    public void TryAppend_Char_Succeeds()
+    {
+        using var builder = ZaPooledStringBuilder.Rent(4);
+        var ok = builder.TryAppend('A');
+
+        Assert.True(ok);
+        Assert.Equal("A", builder.ToString());
+        Assert.Equal(1, builder.Length);
+    }
 }

@@ -1213,13 +1213,38 @@ public static class ZaSpanStringBuilderExtensions
         return ref builder;
     }
 
+    /// <summary>
+    ///     Appends a formatted string using the specified format and arguments.
+    ///     <para>
+    ///         Note: This overload currently delegates to <see cref="string.Format(string, object?[])" />
+    ///         and allocates a string due to <c>string.Format</c> requiring a string format parameter.
+    ///         A future optimization may implement a zero-allocation format parser for simple positional placeholders.
+    ///     </para>
+    /// </summary>
+    /// <param name="builder">The builder instance.</param>
+    /// <param name="format">A composite format string.</param>
+    /// <param name="args">An object array that contains zero or more objects to format.</param>
     public static ref ZaSpanStringBuilder AppendFormat(ref this ZaSpanStringBuilder builder, ReadOnlySpan<char> format, params object?[] args)
     {
         return ref builder.AppendFormat(CultureInfo.InvariantCulture, format, args);
     }
 
+    /// <summary>
+    ///     Appends a formatted string using the specified format provider, format, and arguments.
+    ///     <para>
+    ///         Note: This overload currently delegates to <see cref="string.Format(IFormatProvider, string, object?[])" />
+    ///         and allocates a string due to <c>string.Format</c> requiring a string format parameter.
+    ///         A future optimization may implement a zero-allocation format parser for simple positional placeholders.
+    ///     </para>
+    /// </summary>
+    /// <param name="builder">The builder instance.</param>
+    /// <param name="formatProvider">An object that supplies culture-specific formatting information.</param>
+    /// <param name="format">A composite format string.</param>
+    /// <param name="args">An object array that contains zero or more objects to format.</param>
     public static ref ZaSpanStringBuilder AppendFormat(ref this ZaSpanStringBuilder builder, IFormatProvider? formatProvider, ReadOnlySpan<char> format, params object?[] args)
     {
+        // TODO: Consider implementing a zero-allocation format parser for simple positional placeholders
+        // (e.g., {0}, {1}) to avoid the string allocation when format.ToString() is called.
         var formatted = string.Format(formatProvider, format.ToString(), args);
         return ref builder.Append(formatted.AsSpan());
     }

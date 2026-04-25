@@ -51,4 +51,67 @@ public class ZaSpanStringBuilderUrlHelpersTests
 
         Assert.Equal("/search?q=a%20b&page=1", builder.AsSpan());
     }
+
+    [Fact]
+    public void AppendQueryParam_WithRefBool_TracksFirstAndSubsequent()
+    {
+        Span<char> buffer = stackalloc char[64];
+        var builder = ZaSpanStringBuilder.Create(buffer);
+
+        var isFirst = true;
+        builder.Append("/search")
+            .AppendQueryParam("q", "a b", ref isFirst)
+            .AppendQueryParam("page", "1", ref isFirst)
+            .AppendQueryParam("limit", "10", ref isFirst);
+
+        Assert.Equal("/search?q=a%20b&page=1&limit=10", builder.AsSpan());
+        Assert.False(isFirst);
+    }
+
+    [Fact]
+    public void AppendQueryParam_WithRefBool_StartingFalse()
+    {
+        Span<char> buffer = stackalloc char[64];
+        var builder = ZaSpanStringBuilder.Create(buffer);
+
+        var isFirst = false;
+        builder.Append("/search?q=existing")
+            .AppendQueryParam("page", "1", ref isFirst);
+
+        Assert.Equal("/search?q=existing&page=1", builder.AsSpan());
+        Assert.False(isFirst);
+    }
+
+    [Fact]
+    public void AppendFormUrlEncoded_EncodesSpacesAsPlus()
+    {
+        Span<char> buffer = stackalloc char[64];
+        var builder = ZaSpanStringBuilder.Create(buffer);
+
+        builder.AppendFormUrlEncoded("hello world");
+
+        Assert.Equal("hello+world", builder.AsSpan());
+    }
+
+    [Fact]
+    public void AppendFormUrlEncoded_EncodesSpecialChars()
+    {
+        Span<char> buffer = stackalloc char[64];
+        var builder = ZaSpanStringBuilder.Create(buffer);
+
+        builder.AppendFormUrlEncoded("a=b&c");
+
+        Assert.Equal("a%3Db%26c", builder.AsSpan());
+    }
+
+    [Fact]
+    public void AppendFormUrlEncoded_MixedContent()
+    {
+        Span<char> buffer = stackalloc char[128];
+        var builder = ZaSpanStringBuilder.Create(buffer);
+
+        builder.AppendFormUrlEncoded("hello world! a+b=c");
+
+        Assert.Equal("hello+world%21+a%2Bb%3Dc", builder.AsSpan());
+    }
 }

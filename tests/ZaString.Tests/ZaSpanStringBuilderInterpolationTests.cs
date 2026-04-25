@@ -241,4 +241,49 @@ public class ZaSpanStringBuilderInterpolationTests
 
         Assert.Equal("Special: \t\n\r", builder.AsSpan());
     }
+
+    [Fact]
+    public void Append_InterpolatedString_WithPositiveAlignment()
+    {
+        Span<char> buffer = stackalloc char[64];
+        var builder = ZaSpanStringBuilder.Create(buffer);
+
+        builder.Append($"[{42,5}]");
+
+        Assert.Equal("[   42]", builder.AsSpan());
+    }
+
+    [Fact]
+    public void Append_InterpolatedString_WithNegativeAlignment()
+    {
+        Span<char> buffer = stackalloc char[64];
+        var builder = ZaSpanStringBuilder.Create(buffer);
+
+        builder.Append($"[{42,-5}]");
+
+        Assert.Equal("[42   ]", builder.AsSpan());
+    }
+
+    [Fact]
+    public void Append_InterpolatedString_WithAlignmentAndFormat()
+    {
+        Span<char> buffer = stackalloc char[64];
+        var builder = ZaSpanStringBuilder.Create(buffer);
+
+        builder.Append($"[{3.14159,8:F2}]");
+
+        Assert.Equal("[    3.14]", builder.AsSpan());
+    }
+
+    [Fact]
+    public void Append_InterpolatedString_WithNegativeAlignmentAndFormat()
+    {
+        Span<char> buffer = stackalloc char[64];
+        var builder = ZaSpanStringBuilder.Create(buffer);
+
+        builder.Append($"[{3.14159,-8:F2}]");
+
+        Assert.Equal("[3.14    ]", builder.AsSpan());
+    }
+}
 }
