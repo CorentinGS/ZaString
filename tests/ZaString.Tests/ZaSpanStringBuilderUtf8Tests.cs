@@ -105,4 +105,17 @@ public class ZaSpanStringBuilderUtf8Tests
             Assert.Equal(0, buffer[5]);
         }
     }
+
+    [Fact]
+    public unsafe void TryToUtf8NullTerminated_NegativeLength_ReturnsFalse()
+    {
+        Span<char> charBuffer = stackalloc char[128];
+        var builder = ZaSpanStringBuilder.Create(charBuffer);
+        builder.Append("Test");
+
+        var success = builder.TryToUtf8NullTerminated(null, -1, out var bytesWritten);
+
+        Assert.False(success);
+        Assert.Equal(0, bytesWritten);
+    }
 }

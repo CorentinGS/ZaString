@@ -9,7 +9,7 @@ namespace ZaString.Core;
 ///     A disposable handle for a pooled UTF-8 byte buffer.
 ///     This struct MUST be disposed to return the buffer to the pool.
 /// </summary>
-public struct ZaUtf8Handle : IDisposable
+public ref struct ZaUtf8Handle
 {
     private byte[]? _buffer;
     private readonly ArrayPool<byte> _pool;

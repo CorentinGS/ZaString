@@ -1,3 +1,4 @@
+using System.Diagnostics.CodeAnalysis;
 using System.Globalization;
 using System.Runtime.CompilerServices;
 using ZaString.Core;
@@ -234,6 +235,31 @@ public static class ZaSpanStringBuilderExtensions
 
         return ref builder;
     }
+
+    /// <summary>
+    ///     Appends the elements of <paramref name="values" /> separated by <paramref name="separator" />.
+    ///     Null elements are treated as empty strings.
+    /// </summary>
+    public static ref ZaSpanStringBuilder AppendJoin(ref this ZaSpanStringBuilder builder, ReadOnlySpan<char> separator, IEnumerable<string?> values)
+    {
+        var isFirst = true;
+        foreach (var s in values)
+        {
+            if (!isFirst)
+            {
+                builder.Append(separator);
+            }
+
+            isFirst = false;
+            if (s is not null)
+            {
+                builder.Append(s);
+            }
+        }
+
+        return ref builder;
+    }
+
     /// <summary>
     ///     Attempts to append a read-only span of characters to the builder without throwing.
     /// </summary>
@@ -605,6 +631,7 @@ public static class ZaSpanStringBuilderExtensions
     /// <summary>
     ///     Throws a standardized exception for out-of-range errors.
     /// </summary>
+    [DoesNotReturn]
     private static void ThrowOutOfRangeException()
     {
         throw new ArgumentOutOfRangeException("value", "The destination buffer is too small.");
@@ -962,6 +989,94 @@ public static class ZaSpanStringBuilderExtensions
         return true;
     }
 
+    /// <summary>
+    ///     Appends a form URL-encoded string (spaces encoded as '+' instead of '%20').
+    /// </summary>
+    public static ref ZaSpanStringBuilder AppendFormUrlEncoded(ref this ZaSpanStringBuilder builder, ReadOnlySpan<char> value)
+    {
+        if (!TryAppendFormUrlEncoded(ref builder, value))
+        {
+            ThrowOutOfRangeException();
+        }
+
+        return ref builder;
+    }
+
+    public static bool TryAppendFormUrlEncoded(ref this ZaSpanStringBuilder builder, ReadOnlySpan<char> value)
+    {
+        var required = GetFormUrlEncodedLength(value);
+        if (required > builder.RemainingSpan.Length)
+        {
+            return false;
+        }
+
+        var dest = builder.RemainingSpan;
+        var w = 0;
+        for (var i = 0; i < value.Length; i++)
+        {
+            var c = value[i];
+            if (c == ' ')
+            {
+                dest[w++] = '+';
+            }
+            else if (c <= 0x7F)
+            {
+                if (IsUnreservedAscii(c))
+                {
+                    dest[w++] = c;
+                }
+                else
+                {
+                    dest[w++] = '%';
+                    WriteHexByte((byte)c, dest.Slice(w, 2));
+                    w += 2;
+                }
+            }
+            else if (char.IsHighSurrogate(c) && i + 1 < value.Length && char.IsLowSurrogate(value[i + 1]))
+            {
+                var low = value[++i];
+                var codePoint = 0x10000 + (c - 0xD800 << 10 | low - 0xDC00);
+                w += PercentEncodeUtf8FromCodePoint(codePoint, dest[w..]);
+            }
+            else
+            {
+                var codePoint = (int)c;
+                w += PercentEncodeUtf8FromCodePoint(codePoint, dest[w..]);
+            }
+        }
+
+        builder.Advance(required);
+        return true;
+    }
+
+    private static int GetFormUrlEncodedLength(ReadOnlySpan<char> value)
+    {
+        var length = 0;
+        for (var i = 0; i < value.Length; i++)
+        {
+            var c = value[i];
+            if (c == ' ')
+            {
+                length += 1; // '+' instead of '%20'
+            }
+            else if (c <= 0x7F)
+            {
+                length += IsUnreservedAscii(c) ? 1 : 3;
+            }
+            else if (char.IsHighSurrogate(c) && i + 1 < value.Length && char.IsLowSurrogate(value[i + 1]))
+            {
+                length += 4 * 3;
+                i++;
+            }
+            else
+            {
+                length += c <= 0x7FF ? 2 * 3 : 3 * 3;
+            }
+        }
+
+        return length;
+    }
+
     private static int GetUrlEncodedLength(ReadOnlySpan<char> value)
     {
         var length = 0;
@@ -1076,6 +1191,37 @@ public static class ZaSpanStringBuilderExtensions
         }
 
         return ref builder;
+    }
+
+    public static ref ZaSpanStringBuilder AppendQueryParam(ref this ZaSpanStringBuilder builder, ReadOnlySpan<char> key, ReadOnlySpan<char> value, ref bool isFirst, bool urlEncode = true)
+    {
+        builder.Append(isFirst ? '?' : '&');
+        isFirst = false;
+        if (urlEncode)
+        {
+            builder.AppendUrlEncoded(key);
+            builder.Append('=');
+            builder.AppendUrlEncoded(value);
+        }
+        else
+        {
+            builder.Append(key);
+            builder.Append('=');
+            builder.Append(value);
+        }
+
+        return ref builder;
+    }
+
+    public static ref ZaSpanStringBuilder AppendFormat(ref this ZaSpanStringBuilder builder, ReadOnlySpan<char> format, params object?[] args)
+    {
+        return ref builder.AppendFormat(CultureInfo.InvariantCulture, format, args);
+    }
+
+    public static ref ZaSpanStringBuilder AppendFormat(ref this ZaSpanStringBuilder builder, IFormatProvider? formatProvider, ReadOnlySpan<char> format, params object?[] args)
+    {
+        var formatted = string.Format(formatProvider, format.ToString(), args);
+        return ref builder.Append(formatted.AsSpan());
     }
 
     public static ref ZaSpanStringBuilder AppendFormat(ref this ZaSpanStringBuilder builder, string format, params object?[] args)

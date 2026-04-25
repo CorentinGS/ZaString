@@ -3,6 +3,28 @@ using ZaString.Core;
 
 namespace ZaString.Tests;
 
+/// <summary>
+/// A custom ISpanFormattable that always fails to format, used to test safety limits.
+/// </summary>
+public readonly struct FailingFormattable : ISpanFormattable
+{
+    public bool TryFormat(Span<char> destination, out int charsWritten, ReadOnlySpan<char> format, IFormatProvider? provider)
+    {
+        charsWritten = 0;
+        return false;
+    }
+
+    public string ToString(string? format, IFormatProvider? formatProvider)
+    {
+        return string.Empty;
+    }
+
+    public override string ToString()
+    {
+        return string.Empty;
+    }
+}
+
 public class ZaPooledStringBuilderTests
 {
     [Fact]
@@ -205,7 +227,70 @@ public class ZaPooledStringBuilderTests
         }
 
         // Builder should be disposed after using block
-        Assert.Throws<ArgumentOutOfRangeException>(() => builder.Append("Test"));
+        Assert.Throws<ObjectDisposedException>(() => builder.Append("Test"));
+    }
+
+    [Fact]
+    public void Append_AfterDispose_ThrowsObjectDisposedException()
+    {
+        var builder = ZaPooledStringBuilder.Rent(128);
+        builder.Dispose();
+
+        Assert.Throws<ObjectDisposedException>(() => builder.Append("test"));
+        Assert.Throws<ObjectDisposedException>(() => builder.Append('x'));
+        Assert.Throws<ObjectDisposedException>(() => builder.Append("test".AsSpan()));
+        Assert.Throws<ObjectDisposedException>(() => builder.Append(true));
+        Assert.Throws<ObjectDisposedException>(() => builder.Append(42));
+    }
+
+    [Fact]
+    public void ToString_AfterDispose_ThrowsObjectDisposedException()
+    {
+        var builder = ZaPooledStringBuilder.Rent(128);
+        builder.Append("Test");
+        builder.Dispose();
+
+        Assert.Throws<ObjectDisposedException>(() => builder.ToString());
+    }
+
+    [Fact]
+    public void AsSpan_AfterDispose_ThrowsObjectDisposedException()
+    {
+        var builder = ZaPooledStringBuilder.Rent(128);
+        builder.Append("Test");
+        builder.Dispose();
+
+        Assert.Throws<ObjectDisposedException>(() => builder.AsSpan());
+    }
+
+    [Fact]
+    public void AppendLine_AfterDispose_ThrowsObjectDisposedException()
+    {
+        var builder = ZaPooledStringBuilder.Rent(128);
+        builder.Dispose();
+
+        Assert.Throws<ObjectDisposedException>(() => builder.AppendLine());
+        Assert.Throws<ObjectDisposedException>(() => builder.AppendLine("test"));
+    }
+
+    [Fact]
+    public void ToUtf8NullTerminated_AfterDispose_ThrowsObjectDisposedException()
+    {
+        var builder = ZaPooledStringBuilder.Rent(128);
+        builder.Append("Test");
+        builder.Dispose();
+
+        Assert.Throws<ObjectDisposedException>(() => builder.ToUtf8NullTerminated());
+    }
+
+    [Fact]
+    public void TryToUtf8NullTerminated_AfterDispose_ThrowsObjectDisposedException()
+    {
+        var builder = ZaPooledStringBuilder.Rent(128);
+        builder.Append("Test");
+        builder.Dispose();
+
+        Assert.Throws<ObjectDisposedException>(() => builder.TryToUtf8NullTerminated(Span<byte>.Empty, out _));
     }
 
     [Theory]
@@ -239,5 +324,28 @@ public class ZaPooledStringBuilderTests
 
         var expected = 1234.56.ToString("C", culture);
         Assert.Equal(expected, builder.ToString());
+    }
+
+    [Fact]
+    public void Append_FailingISpanFormattable_ThrowsInvalidOperationException()
+    {
+        using var builder = ZaPooledStringBuilder.Rent(4);
+        var failingValue = new FailingFormattable();
+
+        var ex = Assert.Throws<InvalidOperationException>(() => builder.Append(failingValue));
+        Assert.Equal("ISpanFormattable.TryFormat consistently failed", ex.Message);
+    }
+
+    [Fact]
+    public void EnsureCapacity_Overflow_ThrowsArgumentOutOfRangeException()
+    {
+        using var builder = ZaPooledStringBuilder.Rent(4);
+        builder.Append(new string('x', 100));
+
+        var ensureCapacity = typeof(ZaPooledStringBuilder).GetMethod("EnsureCapacity", System.Reflection.BindingFlags.NonPublic | System.Reflection.BindingFlags.Instance);
+        Assert.NotNull(ensureCapacity);
+
+        var ex = Assert.Throws<System.Reflection.TargetInvocationException>(() => ensureCapacity.Invoke(builder, new object[] { int.MaxValue }));
+        Assert.IsType<ArgumentOutOfRangeException>(ex.InnerException);
     }
 }

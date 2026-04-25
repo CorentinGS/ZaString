@@ -24,7 +24,11 @@ public sealed class ZaPooledStringBuilder : IDisposable
 
     public int Capacity
     {
-        get => _buffer.Length;
+        get
+        {
+            ThrowIfDisposed();
+            return _buffer.Length;
+        }
     }
 
     public void Dispose()
@@ -36,6 +40,12 @@ public sealed class ZaPooledStringBuilder : IDisposable
         _pool.Return(buf);
     }
 
+    private void ThrowIfDisposed()
+    {
+        if (_disposed)
+            throw new ObjectDisposedException(nameof(ZaPooledStringBuilder));
+    }
+
     public static ZaPooledStringBuilder Rent(int initialCapacity = 256, ArrayPool<char>? pool = null)
     {
         return new ZaPooledStringBuilder(pool ?? ArrayPool<char>.Shared, initialCapacity);
@@ -43,22 +53,118 @@ public sealed class ZaPooledStringBuilder : IDisposable
 
     public ReadOnlySpan<char> AsSpan()
     {
+        ThrowIfDisposed();
         return _buffer.AsSpan(0, Length);
     }
 
     public override string ToString()
     {
+        ThrowIfDisposed();
         return new string(_buffer, 0, Length);
     }
 
     public void Clear()
     {
+        ThrowIfDisposed();
         Length = 0;
+    }
+
+    /// <summary>
+    ///     Sets the length to the specified value. Only truncation is allowed.
+    /// </summary>
+    public void SetLength(int newLength)
+    {
+        ThrowIfDisposed();
+        if ((uint)newLength > (uint)Length)
+            throw new ArgumentOutOfRangeException(nameof(newLength));
+
+        Length = newLength;
+    }
+
+    /// <summary>
+    ///     Removes the last <paramref name="count" /> characters.
+    /// </summary>
+    public void RemoveLast(int count)
+    {
+        ThrowIfDisposed();
+        if ((uint)count > (uint)Length)
+            throw new ArgumentOutOfRangeException(nameof(count));
+
+        Length -= count;
+    }
+
+    /// <summary>
+    ///     Gets or sets the character at the specified index.
+    /// </summary>
+    public char this[int index]
+    {
+        get
+        {
+            ThrowIfDisposed();
+            if ((uint)index >= (uint)Length)
+                throw new ArgumentOutOfRangeException(nameof(index));
+            return _buffer[index];
+        }
+        set
+        {
+            ThrowIfDisposed();
+            if ((uint)index >= (uint)Length)
+                throw new ArgumentOutOfRangeException(nameof(index));
+            _buffer[index] = value;
+        }
+    }
+
+    /// <summary>
+    ///     Attempts to append a read-only span without throwing.
+    /// </summary>
+    public bool TryAppend(ReadOnlySpan<char> value)
+    {
+        ThrowIfDisposed();
+        try
+        {
+            EnsureCapacity(value.Length);
+            value.CopyTo(_buffer.AsSpan(Length));
+            Length += value.Length;
+            return true;
+        }
+        catch
+        {
+            return false;
+        }
+    }
+
+    /// <summary>
+    ///     Attempts to append a string without throwing.
+    /// </summary>
+    public bool TryAppend(string? value)
+    {
+        return value is not null && TryAppend(value.AsSpan());
+    }
+
+    /// <summary>
+    ///     Attempts to append a single character without throwing.
+    /// </summary>
+    public bool TryAppend(char value)
+    {
+        ThrowIfDisposed();
+        try
+        {
+            EnsureCapacity(1);
+            _buffer[Length++] = value;
+            return true;
+        }
+        catch
+        {
+            return false;
+        }
     }
 
     private void EnsureCapacity(int additionalRequired)
     {
         ArgumentOutOfRangeException.ThrowIfNegative(additionalRequired);
+
+        if (Length > Array.MaxLength - additionalRequired)
+            throw new ArgumentOutOfRangeException(nameof(additionalRequired), "Required capacity exceeds maximum array length.");
 
         var required = Length + additionalRequired;
         if (required <= _buffer.Length) return;
@@ -67,7 +173,7 @@ public sealed class ZaPooledStringBuilder : IDisposable
         if (newCapacity == 0) newCapacity = 1;
         while (newCapacity < required)
         {
-            newCapacity *= 2;
+            newCapacity = newCapacity > Array.MaxLength / 2 ? Array.MaxLength : newCapacity * 2;
         }
 
         var newBuffer = _pool.Rent(newCapacity);
@@ -78,6 +184,7 @@ public sealed class ZaPooledStringBuilder : IDisposable
 
     public ZaPooledStringBuilder Append(ReadOnlySpan<char> value)
     {
+        ThrowIfDisposed();
         EnsureCapacity(value.Length);
         value.CopyTo(_buffer.AsSpan(Length));
         Length += value.Length;
@@ -86,6 +193,7 @@ public sealed class ZaPooledStringBuilder : IDisposable
 
     public ZaPooledStringBuilder Append(string? value)
     {
+        ThrowIfDisposed();
         if (!string.IsNullOrEmpty(value))
         {
             Append(value.AsSpan());
@@ -96,6 +204,7 @@ public sealed class ZaPooledStringBuilder : IDisposable
 
     public ZaPooledStringBuilder Append(char value)
     {
+        ThrowIfDisposed();
         EnsureCapacity(1);
         _buffer[Length++] = value;
         return this;
@@ -103,12 +212,17 @@ public sealed class ZaPooledStringBuilder : IDisposable
 
     public ZaPooledStringBuilder Append(bool value)
     {
+        ThrowIfDisposed();
         return Append(value ? "true" : "false");
     }
 
+    private const int MaxFormatRetries = 16;
+
     public ZaPooledStringBuilder Append<T>(T value, ReadOnlySpan<char> format = default, IFormatProvider? provider = null) where T : ISpanFormattable
     {
+        ThrowIfDisposed();
         provider ??= CultureInfo.InvariantCulture;
+        int retries = 0;
         while (true)
         {
             if (value.TryFormat(_buffer.AsSpan(Length), out var written, format, provider))
@@ -117,20 +231,24 @@ public sealed class ZaPooledStringBuilder : IDisposable
                 return this;
             }
 
-            // Grow and retry: ensure growth beyond current capacity by at least one character
+            if (++retries > MaxFormatRetries)
+                throw new InvalidOperationException("ISpanFormattable.TryFormat consistently failed");
+
             var remaining = _buffer.Length - Length;
-            var growBy = remaining + 1; // force capacity to exceed current length
+            var growBy = remaining + 1;
             EnsureCapacity(growBy);
         }
     }
 
     public ZaPooledStringBuilder AppendLine()
     {
+        ThrowIfDisposed();
         return Append(Environment.NewLine);
     }
 
     public ZaPooledStringBuilder AppendLine(string? value)
     {
+        ThrowIfDisposed();
         if (value is not null)
         {
             Append(value);
@@ -141,6 +259,7 @@ public sealed class ZaPooledStringBuilder : IDisposable
 
     public ZaUtf8Handle ToUtf8NullTerminated()
     {
+        ThrowIfDisposed();
         var span = AsSpan();
         var byteCount = Encoding.UTF8.GetByteCount(span);
 
@@ -155,6 +274,7 @@ public sealed class ZaPooledStringBuilder : IDisposable
 
     public bool TryToUtf8NullTerminated(Span<byte> destination, out int bytesWritten)
     {
+        ThrowIfDisposed();
         var span = AsSpan();
         var byteCount = Encoding.UTF8.GetByteCount(span);
         var required = byteCount + 1;
@@ -173,6 +293,13 @@ public sealed class ZaPooledStringBuilder : IDisposable
 
     public unsafe bool TryToUtf8NullTerminated(byte* buffer, int length, out int bytesWritten)
     {
+        ThrowIfDisposed();
+        if (length < 0)
+        {
+            bytesWritten = 0;
+            return false;
+        }
+
         if (buffer == null)
         {
             bytesWritten = 0;

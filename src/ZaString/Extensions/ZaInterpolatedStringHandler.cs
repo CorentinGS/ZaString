@@ -58,6 +58,102 @@ public ref struct ZaInterpolatedStringHandler
         _builder.Append(value, format, _provider);
     }
 
+    public void AppendFormatted<T>(T value, int alignment) where T : ISpanFormattable
+    {
+        if (alignment == 0)
+        {
+            _builder.Append(value, default, _provider);
+            return;
+        }
+
+        var remaining = _builder.RemainingSpan;
+        if (!value.TryFormat(remaining, out var charsWritten, default, _provider))
+        {
+            throw new ArgumentOutOfRangeException("value", "The destination buffer is too small.");
+        }
+
+        var padCount = alignment > 0 ? alignment - charsWritten : -alignment - charsWritten;
+
+        if (padCount <= 0)
+        {
+            _builder.Advance(charsWritten);
+            return;
+        }
+
+        if (alignment > 0)
+        {
+            if (remaining.Length < charsWritten + padCount)
+            {
+                throw new ArgumentOutOfRangeException("value", "The destination buffer is too small.");
+            }
+
+            for (var i = charsWritten - 1; i >= 0; i--)
+            {
+                remaining[i + padCount] = remaining[i];
+            }
+
+            for (var i = 0; i < padCount; i++)
+            {
+                remaining[i] = ' ';
+            }
+
+            _builder.Advance(charsWritten + padCount);
+        }
+        else
+        {
+            _builder.Advance(charsWritten);
+            _builder.AppendRepeat(' ', padCount);
+        }
+    }
+
+    public void AppendFormatted<T>(T value, int alignment, string? format) where T : ISpanFormattable
+    {
+        if (alignment == 0)
+        {
+            _builder.Append(value, format, _provider);
+            return;
+        }
+
+        var remaining = _builder.RemainingSpan;
+        if (!value.TryFormat(remaining, out var charsWritten, format, _provider))
+        {
+            throw new ArgumentOutOfRangeException("value", "The destination buffer is too small.");
+        }
+
+        var padCount = alignment > 0 ? alignment - charsWritten : -alignment - charsWritten;
+
+        if (padCount <= 0)
+        {
+            _builder.Advance(charsWritten);
+            return;
+        }
+
+        if (alignment > 0)
+        {
+            if (remaining.Length < charsWritten + padCount)
+            {
+                throw new ArgumentOutOfRangeException("value", "The destination buffer is too small.");
+            }
+
+            for (var i = charsWritten - 1; i >= 0; i--)
+            {
+                remaining[i + padCount] = remaining[i];
+            }
+
+            for (var i = 0; i < padCount; i++)
+            {
+                remaining[i] = ' ';
+            }
+
+            _builder.Advance(charsWritten + padCount);
+        }
+        else
+        {
+            _builder.Advance(charsWritten);
+            _builder.AppendRepeat(' ', padCount);
+        }
+    }
+
     public readonly ZaSpanStringBuilder GetResult()
     {
         return _builder;
