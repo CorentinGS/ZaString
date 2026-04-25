@@ -353,6 +353,7 @@ public static class ZaSpanStringBuilderExtensions
     /// <returns><c>true</c> if the string and newline were appended; otherwise <c>false</c> if there was not enough capacity.</returns>
     public static bool TryAppendLine(ref this ZaSpanStringBuilder builder, string? value)
     {
+        // Note: .NET strings are immutable, so the length check and copy are atomic.
         var valueLength = value?.Length ?? 0;
         var newlineLength = Environment.NewLine.Length;
         var required = valueLength + newlineLength;
@@ -658,17 +659,29 @@ public static class ZaSpanStringBuilderExtensions
 
     public static bool TryAppendJsonEscaped(ref this ZaSpanStringBuilder builder, ReadOnlySpan<char> value)
     {
+        // Fast path: check if any escaping is needed
+        var needsEscape = value.IndexOfAny("\"\\\b\f\n\r\t".AsSpan()) >= 0;
+        if (!needsEscape)
+        {
+            for (int i = 0; i < value.Length; i++)
+            {
+                if (value[i] < ' ')
+                {
+                    needsEscape = true;
+                    break;
+                }
+            }
+        }
+
+        if (!needsEscape)
+        {
+            return builder.TryAppend(value);
+        }
+
         var required = GetJsonEscapedLength(value);
         if (required > builder.RemainingSpan.Length)
         {
             return false;
-        }
-
-        if (required == value.Length)
-        {
-            value.CopyTo(builder.RemainingSpan);
-            builder.Advance(value.Length);
-            return true;
         }
 
         var dest = builder.RemainingSpan;
@@ -705,6 +718,22 @@ public static class ZaSpanStringBuilderExtensions
                 case '\t':
                     dest[w++] = '\\';
                     dest[w++] = 't';
+                    break;
+                case '\u2028':
+                    dest[w++] = '\\';
+                    dest[w++] = 'u';
+                    dest[w++] = '2';
+                    dest[w++] = '0';
+                    dest[w++] = '2';
+                    dest[w++] = '8';
+                    break;
+                case '\u2029':
+                    dest[w++] = '\\';
+                    dest[w++] = 'u';
+                    dest[w++] = '2';
+                    dest[w++] = '0';
+                    dest[w++] = '2';
+                    dest[w++] = '9';
                     break;
 
                 default:
@@ -746,6 +775,10 @@ public static class ZaSpanStringBuilderExtensions
                 case '\t':
                     extra += 1; // becomes two chars instead of one
                     break;
+                case '\u2028':
+                case '\u2029':
+                    extra += 5; // \u202X adds 5 extra over the original 1
+                    break;
 
                 default:
                     if (c < ' ')
@@ -785,17 +818,16 @@ public static class ZaSpanStringBuilderExtensions
 
     public static bool TryAppendHtmlEscaped(ref this ZaSpanStringBuilder builder, ReadOnlySpan<char> value)
     {
+        // Fast path: check if any escaping is needed
+        if (value.IndexOfAny("&<>\"'".AsSpan()) < 0)
+        {
+            return builder.TryAppend(value);
+        }
+
         var required = GetHtmlEscapedLength(value);
         if (required > builder.RemainingSpan.Length)
         {
             return false;
-        }
-
-        if (required == value.Length)
-        {
-            value.CopyTo(builder.RemainingSpan);
-            builder.Advance(value.Length);
-            return true;
         }
 
         var dest = builder.RemainingSpan;
@@ -912,7 +944,7 @@ public static class ZaSpanStringBuilderExtensions
 
     private static bool NeedsCsvQuoting(ReadOnlySpan<char> value)
     {
-        if (value.Length == 0) return false;
+        if (value.Length == 0) return true; // Quote empty strings
         if (char.IsWhiteSpace(value[0]) || char.IsWhiteSpace(value[^1])) return true;
         foreach (var c in value)
         {
@@ -948,6 +980,22 @@ public static class ZaSpanStringBuilderExtensions
 
     public static bool TryAppendUrlEncoded(ref this ZaSpanStringBuilder builder, ReadOnlySpan<char> value)
     {
+        // Fast path: check if any encoding is needed
+        var needsEncoding = false;
+        for (int i = 0; i < value.Length; i++)
+        {
+            if (!IsUnreservedAscii(value[i]))
+            {
+                needsEncoding = true;
+                break;
+            }
+        }
+
+        if (!needsEncoding)
+        {
+            return builder.TryAppend(value);
+        }
+
         var required = GetUrlEncodedLength(value);
         if (required > builder.RemainingSpan.Length)
         {
@@ -1004,6 +1052,22 @@ public static class ZaSpanStringBuilderExtensions
 
     public static bool TryAppendFormUrlEncoded(ref this ZaSpanStringBuilder builder, ReadOnlySpan<char> value)
     {
+        // Fast path: check if any encoding is needed
+        var needsEncoding = false;
+        for (int i = 0; i < value.Length; i++)
+        {
+            if (value[i] == ' ' || !IsUnreservedAscii(value[i]))
+            {
+                needsEncoding = true;
+                break;
+            }
+        }
+
+        if (!needsEncoding)
+        {
+            return builder.TryAppend(value);
+        }
+
         var required = GetFormUrlEncodedLength(value);
         if (required > builder.RemainingSpan.Length)
         {

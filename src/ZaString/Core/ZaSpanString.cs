@@ -7,11 +7,9 @@ using System.Text;
 namespace ZaString.Core;
 
 /// <summary>
-///     A zero-allocation string builder that writes directly to a provided Span
-///     <char>
-///         .
-///         This is a ref struct to ensure it is only allocated on the stack.
-///         Append operations are provided as extension methods to allow for a fluent, chainable API.
+///     A zero-allocation string builder that writes directly to a provided Span&lt;char&gt;.
+///     This is a ref struct to ensure it is only allocated on the stack.
+///     Append operations are provided as extension methods to allow for a fluent, chainable API.
 /// </summary>
 public ref struct ZaSpanStringBuilder
 {

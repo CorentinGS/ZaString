@@ -286,4 +286,3 @@ public class ZaSpanStringBuilderInterpolationTests
         Assert.Equal("[3.14    ]", builder.AsSpan());
     }
 }
-}

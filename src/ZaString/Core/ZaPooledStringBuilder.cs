@@ -15,6 +15,7 @@ public sealed class ZaPooledStringBuilder : IDisposable
 
     private ZaPooledStringBuilder(ArrayPool<char> pool, int initialCapacity)
     {
+        ArgumentOutOfRangeException.ThrowIfNegative(initialCapacity);
         _pool = pool;
         _buffer = pool.Rent(Math.Max(1, initialCapacity));
         Length = 0;
@@ -138,7 +139,7 @@ public sealed class ZaPooledStringBuilder : IDisposable
     /// </summary>
     public bool TryAppend(string? value)
     {
-        return value is not null && TryAppend(value.AsSpan());
+        return value is null || TryAppend(value.AsSpan());
     }
 
     /// <summary>
@@ -169,12 +170,8 @@ public sealed class ZaPooledStringBuilder : IDisposable
         var required = Length + additionalRequired;
         if (required <= _buffer.Length) return;
 
-        var newCapacity = _buffer.Length;
-        if (newCapacity == 0) newCapacity = 1;
-        while (newCapacity < required)
-        {
-            newCapacity = newCapacity > Array.MaxLength / 2 ? Array.MaxLength : newCapacity * 2;
-        }
+        var newCapacity = Math.Max(required, _buffer.Length + (_buffer.Length / 2));
+        if (newCapacity < 256) newCapacity = 256;
 
         var newBuffer = _pool.Rent(newCapacity);
         _buffer.AsSpan(0, Length).CopyTo(newBuffer);
