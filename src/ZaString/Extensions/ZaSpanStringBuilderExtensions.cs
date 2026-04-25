@@ -353,12 +353,10 @@ public static class ZaSpanStringBuilderExtensions
     /// <returns><c>true</c> if the string and newline were appended; otherwise <c>false</c> if there was not enough capacity.</returns>
     public static bool TryAppendLine(ref this ZaSpanStringBuilder builder, string? value)
     {
-        // Note: .NET strings are immutable, so the length check and copy are atomic.
         var valueLength = value?.Length ?? 0;
         var newlineLength = Environment.NewLine.Length;
-        var required = valueLength + newlineLength;
 
-        if (required > builder.RemainingSpan.Length)
+        if (!HasCapacityForLine(valueLength, newlineLength, builder.RemainingSpan.Length))
         {
             return false;
         }
@@ -373,6 +371,12 @@ public static class ZaSpanStringBuilderExtensions
         builder.Advance(newlineLength);
         return true;
     }
+
+    private static bool HasCapacityForLine(int valueLength, int newlineLength, int remainingLength)
+    {
+        return valueLength <= remainingLength && newlineLength <= remainingLength - valueLength;
+    }
+
     /// <summary>
     ///     Appends a read-only span of characters to the builder.
     /// </summary>
@@ -659,7 +663,6 @@ public static class ZaSpanStringBuilderExtensions
 
     public static bool TryAppendJsonEscaped(ref this ZaSpanStringBuilder builder, ReadOnlySpan<char> value)
     {
-        // Fast path: check if any escaping is needed
         var needsEscape = value.IndexOfAny("\"\\\b\f\n\r\t".AsSpan()) >= 0;
         if (!needsEscape)
         {
@@ -773,17 +776,17 @@ public static class ZaSpanStringBuilderExtensions
                 case '\n':
                 case '\r':
                 case '\t':
-                    extra += 1; // becomes two chars instead of one
+                    extra += 1;
                     break;
                 case '\u2028':
                 case '\u2029':
-                    extra += 5; // \u202X adds 5 extra over the original 1
+                    extra += 5;
                     break;
 
                 default:
                     if (c < ' ')
                     {
-                        extra += 5; // \u00XX adds 5 extra over the original 1
+                        extra += 5;
                     }
 
                     break;
@@ -818,7 +821,6 @@ public static class ZaSpanStringBuilderExtensions
 
     public static bool TryAppendHtmlEscaped(ref this ZaSpanStringBuilder builder, ReadOnlySpan<char> value)
     {
-        // Fast path: check if any escaping is needed
         if (value.IndexOfAny("&<>\"'".AsSpan()) < 0)
         {
             return builder.TryAppend(value);
@@ -842,19 +844,19 @@ public static class ZaSpanStringBuilderExtensions
                     dest[w++] = 'm';
                     dest[w++] = 'p';
                     dest[w++] = ';';
-                    break; // &amp;
+                    break;
                 case '<':
                     dest[w++] = '&';
                     dest[w++] = 'l';
                     dest[w++] = 't';
                     dest[w++] = ';';
-                    break; // &lt;
+                    break;
                 case '>':
                     dest[w++] = '&';
                     dest[w++] = 'g';
                     dest[w++] = 't';
                     dest[w++] = ';';
-                    break; // &gt;
+                    break;
                 case '"':
                     dest[w++] = '&';
                     dest[w++] = 'q';
@@ -862,14 +864,14 @@ public static class ZaSpanStringBuilderExtensions
                     dest[w++] = 'o';
                     dest[w++] = 't';
                     dest[w++] = ';';
-                    break; // &quot;
+                    break;
                 case '\'':
                     dest[w++] = '&';
                     dest[w++] = '#';
                     dest[w++] = '3';
                     dest[w++] = '9';
                     dest[w++] = ';';
-                    break; // &#39;
+                    break;
                 default: dest[w++] = t; break;
             }
         }
@@ -885,11 +887,11 @@ public static class ZaSpanStringBuilderExtensions
         {
             switch (t)
             {
-                case '&': extra += 4; break; // &amp; (5) - 1 original = +4
+                case '&': extra += 4; break;
                 case '<':
-                case '>': extra += 3; break; // &lt; or &gt; (4) -1 = +3
-                case '"': extra += 5; break; // &quot; (6) -1 = +5
-                case '\'': extra += 4; break; // &#39; (5) -1 = +4
+                case '>': extra += 3; break;
+                case '"': extra += 5; break;
+                case '\'': extra += 4; break;
             }
         }
 
@@ -944,7 +946,7 @@ public static class ZaSpanStringBuilderExtensions
 
     private static bool NeedsCsvQuoting(ReadOnlySpan<char> value)
     {
-        if (value.Length == 0) return true; // Quote empty strings
+        if (value.Length == 0) return true;
         if (char.IsWhiteSpace(value[0]) || char.IsWhiteSpace(value[^1])) return true;
         foreach (var c in value)
         {
@@ -980,7 +982,6 @@ public static class ZaSpanStringBuilderExtensions
 
     public static bool TryAppendUrlEncoded(ref this ZaSpanStringBuilder builder, ReadOnlySpan<char> value)
     {
-        // Fast path: check if any encoding is needed
         var needsEncoding = false;
         for (int i = 0; i < value.Length; i++)
         {
@@ -1052,7 +1053,6 @@ public static class ZaSpanStringBuilderExtensions
 
     public static bool TryAppendFormUrlEncoded(ref this ZaSpanStringBuilder builder, ReadOnlySpan<char> value)
     {
-        // Fast path: check if any encoding is needed
         var needsEncoding = false;
         for (int i = 0; i < value.Length; i++)
         {
@@ -1068,7 +1068,7 @@ public static class ZaSpanStringBuilderExtensions
             return builder.TryAppend(value);
         }
 
-        var required = GetFormUrlEncodedLength(value);
+        var required = GetFormUrlEncodedLengthReplacingInvalid(value);
         if (required > builder.RemainingSpan.Length)
         {
             return false;
@@ -1104,8 +1104,7 @@ public static class ZaSpanStringBuilderExtensions
             }
             else
             {
-                var codePoint = (int)c;
-                w += PercentEncodeUtf8FromCodePoint(codePoint, dest[w..]);
+                w += WriteReplacementChar(dest[w..]);
             }
         }
 
@@ -1121,7 +1120,7 @@ public static class ZaSpanStringBuilderExtensions
             var c = value[i];
             if (c == ' ')
             {
-                length += 1; // '+' instead of '%20'
+                length += 1;
             }
             else if (c <= 0x7F)
             {
@@ -1141,6 +1140,34 @@ public static class ZaSpanStringBuilderExtensions
         return length;
     }
 
+    private static int GetFormUrlEncodedLengthReplacingInvalid(ReadOnlySpan<char> value)
+    {
+        var length = 0;
+        for (var i = 0; i < value.Length; i++)
+        {
+            var c = value[i];
+            if (c == ' ')
+            {
+                length += 1;
+            }
+            else if (c <= 0x7F)
+            {
+                length += IsUnreservedAscii(c) ? 1 : 3;
+            }
+            else if (char.IsHighSurrogate(c) && i + 1 < value.Length && char.IsLowSurrogate(value[i + 1]))
+            {
+                length += 4 * 3;
+                i++;
+            }
+            else
+            {
+                length += 9;
+            }
+        }
+
+        return length;
+    }
+
     private static int GetUrlEncodedLength(ReadOnlySpan<char> value)
     {
         var length = 0;
@@ -1153,13 +1180,36 @@ public static class ZaSpanStringBuilderExtensions
             }
             else if (char.IsHighSurrogate(c) && i + 1 < value.Length && char.IsLowSurrogate(value[i + 1]))
             {
-                length += 4 * 3; // 4 UTF-8 bytes -> %HH %HH %HH %HH
-                i++; // consume low surrogate
+                length += 4 * 3;
+                i++;
             }
             else
             {
-                // Non-surrogate BMP char: 0x80..0x7FF => 2 bytes; 0x800..0xFFFF => 3 bytes
                 length += c <= 0x7FF ? 2 * 3 : 3 * 3;
+            }
+        }
+
+        return length;
+    }
+
+    private static int GetUrlEncodedLengthReplacingInvalid(ReadOnlySpan<char> value)
+    {
+        var length = 0;
+        for (var i = 0; i < value.Length; i++)
+        {
+            var c = value[i];
+            if (c <= 0x7F)
+            {
+                length += IsUnreservedAscii(c) ? 1 : 3;
+            }
+            else if (char.IsHighSurrogate(c) && i + 1 < value.Length && char.IsLowSurrogate(value[i + 1]))
+            {
+                length += 4 * 3;
+                i++;
+            }
+            else
+            {
+                length += 9;
             }
         }
 
@@ -1170,7 +1220,6 @@ public static class ZaSpanStringBuilderExtensions
     {
         switch (codePoint)
         {
-            // Returns number of chars written to dest (multiple of 3)
             case <= 0x7F:
                 dest[0] = '%';
                 WriteHexByte((byte)codePoint, dest.Slice(1, 2));
@@ -1220,6 +1269,20 @@ public static class ZaSpanStringBuilderExtensions
         }
     }
 
+    private static int WriteReplacementChar(Span<char> dest)
+    {
+        dest[0] = '%';
+        dest[1] = 'E';
+        dest[2] = 'F';
+        dest[3] = '%';
+        dest[4] = 'B';
+        dest[5] = 'F';
+        dest[6] = '%';
+        dest[7] = 'B';
+        dest[8] = 'D';
+        return 9;
+    }
+
     private static int WriteUrlEncoded(ReadOnlySpan<char> value, Span<char> dest)
     {
         var w = 0;
@@ -1255,10 +1318,44 @@ public static class ZaSpanStringBuilderExtensions
         return w;
     }
 
+    private static int WriteUrlEncodedReplacingInvalid(ReadOnlySpan<char> value, Span<char> dest)
+    {
+        var w = 0;
+        for (var i = 0; i < value.Length; i++)
+        {
+            var c = value[i];
+            if (c <= 0x7F)
+            {
+                if (IsUnreservedAscii(c))
+                {
+                    dest[w++] = c;
+                }
+                else
+                {
+                    dest[w++] = '%';
+                    WriteHexByte((byte)c, dest.Slice(w, 2));
+                    w += 2;
+                }
+            }
+            else if (char.IsHighSurrogate(c) && i + 1 < value.Length && char.IsLowSurrogate(value[i + 1]))
+            {
+                var low = value[++i];
+                var codePoint = 0x10000 + (c - 0xD800 << 10 | low - 0xDC00);
+                w += PercentEncodeUtf8FromCodePoint(codePoint, dest[w..]);
+            }
+            else
+            {
+                w += WriteReplacementChar(dest[w..]);
+            }
+        }
+
+        return w;
+    }
+
     private static int GetQueryParamLength(ReadOnlySpan<char> key, ReadOnlySpan<char> value, bool urlEncode)
     {
-        var keyLength = urlEncode ? GetUrlEncodedLength(key) : key.Length;
-        var valueLength = urlEncode ? GetUrlEncodedLength(value) : value.Length;
+        var keyLength = urlEncode ? GetUrlEncodedLengthReplacingInvalid(key) : key.Length;
+        var valueLength = urlEncode ? GetUrlEncodedLengthReplacingInvalid(value) : value.Length;
         return 1 + keyLength + 1 + valueLength;
     }
 
@@ -1269,9 +1366,9 @@ public static class ZaSpanStringBuilderExtensions
 
         if (urlEncode)
         {
-            written += WriteUrlEncoded(key, destination[written..]);
+            written += WriteUrlEncodedReplacingInvalid(key, destination[written..]);
             destination[written++] = '=';
-            written += WriteUrlEncoded(value, destination[written..]);
+            written += WriteUrlEncodedReplacingInvalid(value, destination[written..]);
             return;
         }
 
@@ -1288,7 +1385,6 @@ public static class ZaSpanStringBuilderExtensions
             builder.Append(separator);
         }
 
-        // Trim leading separators in segment
         var start = 0;
         while (start < segment.Length && segment[start] == separator) start++;
         if (start < segment.Length)
@@ -1356,8 +1452,6 @@ public static class ZaSpanStringBuilderExtensions
     /// <param name="args">An object array that contains zero or more objects to format.</param>
     public static ref ZaSpanStringBuilder AppendFormat(ref this ZaSpanStringBuilder builder, IFormatProvider? formatProvider, ReadOnlySpan<char> format, params object?[] args)
     {
-        // TODO: Consider implementing a zero-allocation format parser for simple positional placeholders
-        // (e.g., {0}, {1}) to avoid the string allocation when format.ToString() is called.
         var formatted = string.Format(formatProvider, format.ToString(), args);
         return ref builder.Append(formatted.AsSpan());
     }

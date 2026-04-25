@@ -176,13 +176,27 @@ public sealed class ZaPooledStringBuilder : IDisposable
         var required = Length + additionalRequired;
         if (required <= _buffer.Length) return;
 
-        var newCapacity = Math.Max(required, _buffer.Length + (_buffer.Length / 2));
-        if (newCapacity < 256) newCapacity = 256;
+        var newCapacity = ComputeExpandedCapacity(_buffer.Length, required);
 
         var newBuffer = _pool.Rent(newCapacity);
         _buffer.AsSpan(0, Length).CopyTo(newBuffer);
         _pool.Return(_buffer);
         _buffer = newBuffer;
+    }
+
+    private static int ComputeExpandedCapacity(int currentCapacity, int required)
+    {
+        var grown = currentCapacity <= Array.MaxLength - (currentCapacity / 2)
+            ? currentCapacity + (currentCapacity / 2)
+            : Array.MaxLength;
+
+        var newCapacity = Math.Max(required, grown);
+        if (newCapacity < 256)
+        {
+            newCapacity = 256;
+        }
+
+        return Math.Min(newCapacity, Array.MaxLength);
     }
 
     public ZaPooledStringBuilder Append(ReadOnlySpan<char> value)
@@ -265,7 +279,7 @@ public sealed class ZaPooledStringBuilder : IDisposable
         var byteBuffer = bytePool.Rent(byteCount + 1);
 
         Encoding.UTF8.TryGetBytes(span, byteBuffer, out var bytesWritten);
-        byteBuffer[bytesWritten] = 0; // Null terminate
+        byteBuffer[bytesWritten] = 0;
 
         return new ZaUtf8Handle(byteBuffer, bytesWritten + 1, bytePool);
     }
@@ -284,8 +298,8 @@ public sealed class ZaPooledStringBuilder : IDisposable
         }
 
         Encoding.UTF8.TryGetBytes(span, destination, out bytesWritten);
-        destination[bytesWritten] = 0; // Null terminate
-        bytesWritten++; // Include null terminator in count
+        destination[bytesWritten] = 0;
+        bytesWritten++;
         return true;
     }
 

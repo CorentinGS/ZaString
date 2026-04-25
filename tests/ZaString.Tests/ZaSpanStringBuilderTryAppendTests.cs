@@ -181,4 +181,18 @@ public class ZaSpanStringBuilderTryAppendTests
         Assert.Equal(value + Environment.NewLine, builder.AsSpan());
         Assert.Equal(required, builder.Length);
     }
+
+    [Theory]
+    [InlineData(5, 2, 7, true)]
+    [InlineData(5, 2, 6, false)]
+    [InlineData(int.MaxValue, 2, int.MaxValue, false)]
+    public void HasCapacityForLine_UsesOverflowSafeArithmetic(int valueLength, int newlineLength, int remainingLength, bool expected)
+    {
+        var hasCapacityForLine = typeof(ZaSpanStringBuilderExtensions)
+            .GetMethod("HasCapacityForLine", System.Reflection.BindingFlags.NonPublic | System.Reflection.BindingFlags.Static);
+
+        Assert.NotNull(hasCapacityForLine);
+        var actual = (bool)hasCapacityForLine.Invoke(null, new object[] { valueLength, newlineLength, remainingLength })!;
+        Assert.Equal(expected, actual);
+    }
 }

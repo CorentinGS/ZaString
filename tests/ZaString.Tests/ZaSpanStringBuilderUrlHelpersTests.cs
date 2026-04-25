@@ -135,4 +135,15 @@ public class ZaSpanStringBuilderUrlHelpersTests
 
         Assert.Equal("hello+world%21+a%2Bb%3Dc", builder.AsSpan());
     }
+
+    [Fact]
+    public void AppendFormUrlEncoded_LoneHighSurrogate_UsesReplacementCharacter()
+    {
+        Span<char> buffer = stackalloc char[32];
+        var builder = ZaSpanStringBuilder.Create(buffer);
+
+        builder.AppendFormUrlEncoded("\uD800");
+
+        Assert.Equal("%EF%BF%BD", builder.AsSpan());
+    }
 }

@@ -687,4 +687,18 @@ public class ZaPooledStringBuilderTests
 
         Assert.Equal("big", builder.ToString());
     }
+
+    [Theory]
+    [InlineData(200, 300, 300)]
+    [InlineData(200, 100, 300)]
+    [InlineData(0, 1, 256)]
+    public void ComputeExpandedCapacity_ClampsAndGrowsSafely(int currentCapacity, int required, int expected)
+    {
+        var computeExpandedCapacity = typeof(ZaPooledStringBuilder)
+            .GetMethod("ComputeExpandedCapacity", System.Reflection.BindingFlags.NonPublic | System.Reflection.BindingFlags.Static);
+
+        Assert.NotNull(computeExpandedCapacity);
+        var actual = (int)computeExpandedCapacity.Invoke(null, new object[] { currentCapacity, required })!;
+        Assert.Equal(expected, actual);
+    }
 }
