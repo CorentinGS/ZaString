@@ -294,6 +294,7 @@ public class ZaUtf8SpanWriterTests
         var writer = ZaUtf8SpanWriter.Create(buffer);
 
         var exceptionThrown = false;
+        ArgumentOutOfRangeException? caughtEx = null;
         try
         {
             writer.Append("Hello");
@@ -301,10 +302,11 @@ public class ZaUtf8SpanWriterTests
         catch (ArgumentOutOfRangeException ex)
         {
             exceptionThrown = true;
-            Assert.Contains("destination buffer is too small", ex.Message);
+            caughtEx = ex;
         }
 
         Assert.True(exceptionThrown, "Expected ArgumentOutOfRangeException to be thrown");
+        Assert.Contains("destination buffer is too small", caughtEx!.Message);
     }
 
     [Fact]
@@ -320,6 +322,7 @@ public class ZaUtf8SpanWriterTests
             0x03
         };
         var exceptionThrown = false;
+        ArgumentOutOfRangeException? caughtEx = null;
         try
         {
             writer.AppendHex(data);
@@ -327,10 +330,11 @@ public class ZaUtf8SpanWriterTests
         catch (ArgumentOutOfRangeException ex)
         {
             exceptionThrown = true;
-            Assert.Contains("destination buffer is too small", ex.Message);
+            caughtEx = ex;
         }
 
         Assert.True(exceptionThrown, "Expected ArgumentOutOfRangeException to be thrown");
+        Assert.Contains("destination buffer is too small", caughtEx!.Message);
     }
 
     [Fact]
@@ -349,6 +353,7 @@ public class ZaUtf8SpanWriterTests
             0x06
         };
         var exceptionThrown = false;
+        ArgumentOutOfRangeException? caughtEx = null;
         try
         {
             writer.AppendBase64(data);
@@ -356,10 +361,11 @@ public class ZaUtf8SpanWriterTests
         catch (ArgumentOutOfRangeException ex)
         {
             exceptionThrown = true;
-            Assert.Contains("destination buffer is too small", ex.Message);
+            caughtEx = ex;
         }
 
         Assert.True(exceptionThrown, "Expected ArgumentOutOfRangeException to be thrown");
+        Assert.Contains("destination buffer is too small", caughtEx!.Message);
     }
 
     private static void AppendToWriter(ref ZaUtf8SpanWriter writer, string value)

@@ -293,6 +293,26 @@ public class ZaPooledStringBuilderTests
         Assert.Throws<ObjectDisposedException>(() => builder.TryToUtf8NullTerminated(Span<byte>.Empty, out _));
     }
 
+    [Fact]
+    public void Clear_AfterDispose_ThrowsObjectDisposedException()
+    {
+        var builder = ZaPooledStringBuilder.Rent(128);
+        builder.Append("Test");
+        builder.Dispose();
+
+        Assert.Throws<ObjectDisposedException>(() => builder.Clear());
+    }
+
+    [Fact]
+    public void Capacity_AfterDispose_ThrowsObjectDisposedException()
+    {
+        var builder = ZaPooledStringBuilder.Rent(128);
+        builder.Append("Test");
+        builder.Dispose();
+
+        Assert.Throws<ObjectDisposedException>(() => _ = builder.Capacity);
+    }
+
     [Theory]
     [InlineData(0)]
     [InlineData(1)]
@@ -513,5 +533,73 @@ public class ZaPooledStringBuilderTests
         Assert.True(ok);
         Assert.Equal("A", builder.ToString());
         Assert.Equal(1, builder.Length);
+    }
+
+    [Fact]
+    public void SetLength_OnEmptyBuilder_Works()
+    {
+        using var builder = ZaPooledStringBuilder.Rent(4);
+        builder.SetLength(0);
+        Assert.Equal(0, builder.Length);
+        Assert.Equal("", builder.ToString());
+    }
+
+    [Fact]
+    public void RemoveLast_OnEmptyBuilder_ThrowsArgumentOutOfRangeException()
+    {
+        using var builder = ZaPooledStringBuilder.Rent(4);
+        Assert.Throws<ArgumentOutOfRangeException>(() => builder.RemoveLast(1));
+    }
+
+    [Fact]
+    public void SetLength_AfterDispose_ThrowsObjectDisposedException()
+    {
+        var builder = ZaPooledStringBuilder.Rent(128);
+        builder.Append("Test");
+        builder.Dispose();
+
+        Assert.Throws<ObjectDisposedException>(() => builder.SetLength(0));
+    }
+
+    [Fact]
+    public void RemoveLast_AfterDispose_ThrowsObjectDisposedException()
+    {
+        var builder = ZaPooledStringBuilder.Rent(128);
+        builder.Append("Test");
+        builder.Dispose();
+
+        Assert.Throws<ObjectDisposedException>(() => builder.RemoveLast(1));
+    }
+
+    [Fact]
+    public void Indexer_Get_AfterDispose_ThrowsObjectDisposedException()
+    {
+        var builder = ZaPooledStringBuilder.Rent(128);
+        builder.Append("Test");
+        builder.Dispose();
+
+        Assert.Throws<ObjectDisposedException>(() => _ = builder[0]);
+    }
+
+    [Fact]
+    public void Indexer_Set_AfterDispose_ThrowsObjectDisposedException()
+    {
+        var builder = ZaPooledStringBuilder.Rent(128);
+        builder.Append("Test");
+        builder.Dispose();
+
+        Assert.Throws<ObjectDisposedException>(() => builder[0] = 'X');
+    }
+
+    [Fact]
+    public void TryAppend_AfterDispose_ThrowsObjectDisposedException()
+    {
+        var builder = ZaPooledStringBuilder.Rent(128);
+        builder.Append("Test");
+        builder.Dispose();
+
+        Assert.Throws<ObjectDisposedException>(() => builder.TryAppend("x"));
+        Assert.Throws<ObjectDisposedException>(() => builder.TryAppend('x'));
+        Assert.Throws<ObjectDisposedException>(() => builder.TryAppend("x".AsSpan()));
     }
 }
