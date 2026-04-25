@@ -155,4 +155,20 @@ public class ZaPooledStringBuilderUtf8Tests
         // After disposal, the handle should be invalid
         // Since it's a ref struct, it can't be copied, preventing use-after-free
     }
+
+    [Fact]
+    public unsafe void TryToUtf8NullTerminated_NegativeLengthWithBuffer_ReturnsFalse()
+    {
+        using var builder = ZaPooledStringBuilder.Rent();
+        builder.Append("Test");
+
+        Span<byte> buffer = stackalloc byte[10];
+        fixed (byte* ptr = buffer)
+        {
+            var success = builder.TryToUtf8NullTerminated(ptr, -1, out var bytesWritten);
+
+            Assert.False(success);
+            Assert.Equal(0, bytesWritten);
+        }
+    }
 }

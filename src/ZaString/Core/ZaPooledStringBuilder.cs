@@ -234,11 +234,6 @@ public sealed class ZaPooledStringBuilder : IDisposable
             var remaining = _buffer.Length - Length;
             var growBy = remaining + 1;
             EnsureCapacity(growBy);
-
-            if (_buffer.Length == previousCapacity)
-            {
-                throw new InvalidOperationException("ISpanFormattable.TryFormat consistently failed");
-            }
         }
     }
 
