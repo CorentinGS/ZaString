@@ -67,6 +67,11 @@ public ref struct ZaInterpolatedStringHandler
         }
 
         var remaining = _builder.RemainingSpan;
+        if (remaining.Length < Math.Abs(alignment))
+        {
+            throw new ArgumentOutOfRangeException("value", "The destination buffer is too small.");
+        }
+
         if (!value.TryFormat(remaining, out var charsWritten, default, _provider))
         {
             throw new ArgumentOutOfRangeException("value", "The destination buffer is too small.");
@@ -101,8 +106,13 @@ public ref struct ZaInterpolatedStringHandler
         }
         else
         {
-            _builder.Advance(charsWritten);
-            _builder.AppendRepeat(' ', padCount);
+            if (remaining.Length < charsWritten + padCount)
+            {
+                throw new ArgumentOutOfRangeException("value", "The destination buffer is too small.");
+            }
+
+            remaining.Slice(charsWritten, padCount).Fill(' ');
+            _builder.Advance(charsWritten + padCount);
         }
     }
 
@@ -115,6 +125,11 @@ public ref struct ZaInterpolatedStringHandler
         }
 
         var remaining = _builder.RemainingSpan;
+        if (remaining.Length < Math.Abs(alignment))
+        {
+            throw new ArgumentOutOfRangeException("value", "The destination buffer is too small.");
+        }
+
         if (!value.TryFormat(remaining, out var charsWritten, format, _provider))
         {
             throw new ArgumentOutOfRangeException("value", "The destination buffer is too small.");
@@ -149,8 +164,13 @@ public ref struct ZaInterpolatedStringHandler
         }
         else
         {
-            _builder.Advance(charsWritten);
-            _builder.AppendRepeat(' ', padCount);
+            if (remaining.Length < charsWritten + padCount)
+            {
+                throw new ArgumentOutOfRangeException("value", "The destination buffer is too small.");
+            }
+
+            remaining.Slice(charsWritten, padCount).Fill(' ');
+            _builder.Advance(charsWritten + padCount);
         }
     }
 

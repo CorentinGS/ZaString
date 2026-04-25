@@ -139,21 +139,7 @@ public class ZaPooledStringBuilderUtf8Tests
     [Fact]
     public void ZaUtf8Handle_IsRefStruct_PreventsHeapAllocation()
     {
-        // This test verifies that ZaUtf8Handle is a ref struct
-        // by ensuring it can be used with pattern-based disposal
-        // but cannot be stored in fields (compile-time check)
-        using var builder = ZaPooledStringBuilder.Rent();
-        builder.Append("Test");
-
-        using (var handle = builder.ToUtf8NullTerminated())
-        {
-            var span = handle.Span;
-            Assert.Equal(5, span.Length);
-            Assert.Equal((byte)'T', span[0]);
-        }
-
-        // After disposal, the handle should be invalid
-        // Since it's a ref struct, it can't be copied, preventing use-after-free
+        Assert.True(typeof(ZaUtf8Handle).IsByRefLike);
     }
 
     [Fact]

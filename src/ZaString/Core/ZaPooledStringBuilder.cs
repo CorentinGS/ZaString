@@ -121,17 +121,24 @@ public sealed class ZaPooledStringBuilder : IDisposable
     public bool TryAppend(ReadOnlySpan<char> value)
     {
         ThrowIfDisposed();
-        try
-        {
-            EnsureCapacity(value.Length);
-            value.CopyTo(_buffer.AsSpan(Length));
-            Length += value.Length;
-            return true;
-        }
-        catch
+
+        if (value.Length > Array.MaxLength - Length)
         {
             return false;
         }
+
+        try
+        {
+            EnsureCapacity(value.Length);
+        }
+        catch (ArgumentOutOfRangeException)
+        {
+            return false;
+        }
+
+        value.CopyTo(_buffer.AsSpan(Length));
+        Length += value.Length;
+        return true;
     }
 
     /// <summary>
@@ -148,16 +155,15 @@ public sealed class ZaPooledStringBuilder : IDisposable
     public bool TryAppend(char value)
     {
         ThrowIfDisposed();
-        try
-        {
-            EnsureCapacity(1);
-            _buffer[Length++] = value;
-            return true;
-        }
-        catch
+
+        if (Length >= Array.MaxLength)
         {
             return false;
         }
+
+        EnsureCapacity(1);
+        _buffer[Length++] = value;
+        return true;
     }
 
     private void EnsureCapacity(int additionalRequired)

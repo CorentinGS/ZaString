@@ -285,4 +285,40 @@ public class ZaSpanStringBuilderInterpolationTests
 
         Assert.Equal("[3.14    ]", builder.AsSpan());
     }
+
+    [Fact]
+    public void Append_InterpolatedString_WithNegativeAlignment_LeavesBuilderUnchangedWhenPaddingOverflows()
+    {
+        var buffer = "xxxxx".ToCharArray();
+
+        var exception = Assert.Throws<ArgumentOutOfRangeException>(() => AppendNegativeAlignedValue(buffer));
+
+        Assert.Equal("value", exception.ParamName);
+        Assert.Equal("xxxxx", new string(buffer));
+    }
+
+    [Fact]
+    public void Append_InterpolatedString_WithNegativeAlignmentAndFormat_LeavesBuilderUnchangedWhenPaddingOverflows()
+    {
+        var buffer = "xxxxx".ToCharArray();
+
+        var exception = Assert.Throws<ArgumentOutOfRangeException>(() => AppendNegativeAlignedFormattedValue(buffer));
+
+        Assert.Equal("value", exception.ParamName);
+        Assert.Equal("xxxxx", new string(buffer));
+    }
+
+    private static void AppendNegativeAlignedValue(char[] buffer)
+    {
+        var builder = ZaSpanStringBuilder.Create(buffer);
+        var handler = new ZaInterpolatedStringHandler(0, 1, ref builder);
+        handler.AppendFormatted(42, -6);
+    }
+
+    private static void AppendNegativeAlignedFormattedValue(char[] buffer)
+    {
+        var builder = ZaSpanStringBuilder.Create(buffer);
+        var handler = new ZaInterpolatedStringHandler(0, 1, ref builder);
+        handler.AppendFormatted(3.14159, -6, "F2");
+    }
 }

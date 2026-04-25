@@ -28,6 +28,18 @@ public class ZaSpanStringBuilderEscapingTests
     }
 
     [Fact]
+    public void TryAppendJsonEscaped_LineAndParagraphSeparators_Unicode()
+    {
+        Span<char> buffer = stackalloc char[64];
+        var builder = ZaSpanStringBuilder.Create(buffer);
+
+        var ok = builder.TryAppendJsonEscaped("A\u2028B\u2029C");
+
+        Assert.True(ok);
+        Assert.Equal("A\\u2028B\\u2029C", builder.AsSpan());
+    }
+
+    [Fact]
     public void AppendHtmlEscaped_Basic()
     {
         Span<char> buffer = stackalloc char[64];

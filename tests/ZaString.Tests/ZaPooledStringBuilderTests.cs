@@ -1,3 +1,4 @@
+using System.Buffers;
 using System.Globalization;
 using ZaString.Core;
 
@@ -22,6 +23,25 @@ public readonly struct FailingFormattable : ISpanFormattable
     public override string ToString()
     {
         return string.Empty;
+    }
+}
+
+file sealed class ThrowingArrayPool : ArrayPool<char>
+{
+    private int _rentCount;
+
+    public override char[] Rent(int minimumLength)
+    {
+        if (_rentCount++ == 0)
+        {
+            return new char[Math.Max(1, minimumLength)];
+        }
+
+        throw new InvalidOperationException("Pool rent failed");
+    }
+
+    public override void Return(char[] array, bool clearArray = false)
+    {
     }
 }
 
@@ -533,6 +553,18 @@ public class ZaPooledStringBuilderTests
         Assert.True(ok);
         Assert.Equal("A", builder.ToString());
         Assert.Equal(1, builder.Length);
+    }
+
+    [Fact]
+    public void TryAppend_UnexpectedPoolFailure_PropagatesException()
+    {
+        var pool = new ThrowingArrayPool();
+
+        using var builder = ZaPooledStringBuilder.Rent(1, pool);
+        builder.Append('A');
+
+        Assert.Throws<InvalidOperationException>(() => builder.TryAppend("BC".AsSpan()));
+        Assert.Throws<InvalidOperationException>(() => builder.TryAppend('B'));
     }
 
     [Fact]

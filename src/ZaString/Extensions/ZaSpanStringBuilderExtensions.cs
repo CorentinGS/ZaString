@@ -665,7 +665,7 @@ public static class ZaSpanStringBuilderExtensions
         {
             for (int i = 0; i < value.Length; i++)
             {
-                if (value[i] < ' ')
+                if (value[i] < ' ' || value[i] is '\u2028' or '\u2029')
                 {
                     needsEscape = true;
                     break;
