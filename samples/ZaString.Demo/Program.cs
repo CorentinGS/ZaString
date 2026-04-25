@@ -47,6 +47,9 @@ public class Program
         InterpolationDemo();
         Console.WriteLine();
 
+        BuilderMutationDemo();
+        Console.WriteLine();
+
         JsonEscapingDemo();
         Console.WriteLine();
 
@@ -139,6 +142,29 @@ public class Program
         builder.Clear();
         builder.AppendLine($"Line: {42}");
         Console.WriteLine(builder.AsSpan().ToString());
+
+        builder.Clear();
+        builder.Append($"|{12,6}|{34,-6}|{Math.PI,8:F2}|");
+        Console.WriteLine($"Aligned columns: {builder.AsSpan()}");
+    }
+
+    private static void BuilderMutationDemo()
+    {
+        Console.WriteLine("--- Builder Mutation Helpers ---");
+
+        Span<char> buffer = stackalloc char[128];
+        var builder = ZaSpanStringBuilder.Create(buffer);
+
+        builder.Append("Status: pending");
+        Console.WriteLine($"Before mutation: {builder.AsSpan()}");
+
+        builder.SetLength(8); // Keep "Status: "
+        builder.Append("ready");
+        Console.WriteLine($"After SetLength: {builder.AsSpan()}");
+
+        builder.RemoveLast(1);
+        builder.Append('!');
+        Console.WriteLine($"After RemoveLast + Append: {builder.AsSpan()}");
     }
 
     private static void JsonEscapingDemo()
@@ -182,11 +208,20 @@ public class Program
         var builder = ZaSpanStringBuilder.Create(buffer);
 
         // Path composition ensures single separators
+        var isFirst = true;
         builder.AppendPathSegment("api").AppendPathSegment("/v1/").AppendPathSegment("users");
-        builder.AppendQueryParam("q", "a b", isFirst: true);
-        builder.AppendQueryParam("tag", "c#");
+        builder.AppendQueryParam("q", "a b", ref isFirst);
+        builder.AppendQueryParam("tag", "c#", ref isFirst);
 
         Console.WriteLine(builder.AsSpan().ToString()); // api/v1/users?q=a%20b&tag=c%23
+
+        builder.Clear();
+        builder.Append("Form body: name=")
+            .AppendFormUrlEncoded("Ada Lovelace")
+            .Append("&title=")
+            .AppendFormUrlEncoded("c# engineer");
+
+        Console.WriteLine(builder.AsSpan().ToString()); // spaces become '+' in form payloads
     }
 
     private static void PooledBuilderDemo()
@@ -197,6 +232,17 @@ public class Program
         b.Append("Hello").Append(", ").Append("World!").Append(' ').Append(123);
         Console.WriteLine(b.AsSpan().ToString());
         Console.WriteLine(b.ToString());
+
+        b.Clear();
+        b.Append("draft");
+        b[0] = 'D';
+        b.TryAppend(" message");
+        b.RemoveLast(4);
+        b.Append("note");
+        Console.WriteLine($"Mutated pooled text: {b.AsSpan()}");
+
+        using var utf8 = b.ToUtf8NullTerminated();
+        Console.WriteLine($"UTF-8 bytes (with null terminator): {utf8.Span.Length}");
     }
 
     private static void BasicUsageDemo()
@@ -441,18 +487,18 @@ public class Program
         {
             var invalidChar = builder[builder.Length]; // This should throw
         }
-        catch (IndexOutOfRangeException)
+        catch (ArgumentOutOfRangeException)
         {
-            Console.WriteLine("✓ IndexOutOfRangeException caught for index >= Length");
+            Console.WriteLine("✓ ArgumentOutOfRangeException caught for index >= Length");
         }
 
         try
         {
             builder[-1] = 'X'; // This should throw
         }
-        catch (IndexOutOfRangeException)
+        catch (ArgumentOutOfRangeException)
         {
-            Console.WriteLine("✓ IndexOutOfRangeException caught for negative index");
+            Console.WriteLine("✓ ArgumentOutOfRangeException caught for negative index");
         }
     }
 
@@ -508,6 +554,12 @@ public class Program
         builder.Clear();
         var fr = new CultureInfo("fr-FR");
         builder.AppendFormat(fr, "User: {0}, Age: {1}, Pi: {2:F2}", name, age, pi);
+        Console.WriteLine(builder.AsSpan().ToString());
+
+        // Span-based overload keeps the call-site flexible when the template is already a span.
+        builder.Clear();
+        ReadOnlySpan<char> spanTemplate = "Span template => User: {0}, Age: {1}";
+        builder.AppendFormat(spanTemplate, name, age);
         Console.WriteLine(builder.AsSpan().ToString());
 
         // Clear and demonstrate AppendFormat with custom formatting
