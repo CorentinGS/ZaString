@@ -997,7 +997,7 @@ public static class ZaSpanStringBuilderExtensions
             return builder.TryAppend(value);
         }
 
-        var required = GetUrlEncodedLength(value);
+        var required = GetUrlEncodedLengthReplacingInvalid(value);
         if (required > builder.RemainingSpan.Length)
         {
             return false;
@@ -1030,7 +1030,9 @@ public static class ZaSpanStringBuilderExtensions
             else
             {
                 var codePoint = (int)c;
-                w += PercentEncodeUtf8FromCodePoint(codePoint, dest[w..]);
+                w += char.IsSurrogate(c)
+                    ? WriteReplacementChar(dest[w..])
+                    : PercentEncodeUtf8FromCodePoint(codePoint, dest[w..]);
             }
         }
 

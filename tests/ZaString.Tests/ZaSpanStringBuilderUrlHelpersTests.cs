@@ -28,6 +28,28 @@ public class ZaSpanStringBuilderUrlHelpersTests
     }
 
     [Fact]
+    public void AppendUrlEncoded_LoneHighSurrogate_UsesReplacementCharacter()
+    {
+        Span<char> buffer = stackalloc char[32];
+        var builder = ZaSpanStringBuilder.Create(buffer);
+
+        builder.AppendUrlEncoded(new string('\uD800', 1));
+
+        Assert.Equal("%EF%BF%BD", builder.AsSpan());
+    }
+
+    [Fact]
+    public void AppendUrlEncoded_LoneLowSurrogate_UsesReplacementCharacter()
+    {
+        Span<char> buffer = stackalloc char[32];
+        var builder = ZaSpanStringBuilder.Create(buffer);
+
+        builder.AppendUrlEncoded(new string('\uDC00', 1));
+
+        Assert.Equal("%EF%BF%BD", builder.AsSpan());
+    }
+
+    [Fact]
     public void AppendPathSegment_Joins_With_Single_Separator()
     {
         Span<char> buffer = stackalloc char[32];
