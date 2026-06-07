@@ -700,81 +700,15 @@ public static class ZaSpanStringBuilderExtensions
 
     public static bool TryAppendHtmlEscaped(ref this ZaSpanStringBuilder builder, ReadOnlySpan<char> value)
     {
-        if (value.IndexOfAny("&<>\"'".AsSpan()) < 0)
-        {
-            return builder.TryAppend(value);
-        }
-
-        var required = GetHtmlEscapedLength(value);
+        var required = HtmlEscapeStrategy.GetEscapedLength(value);
         if (required > builder.RemainingSpan.Length)
         {
             return false;
         }
 
-        var dest = builder.RemainingSpan;
-        var w = 0;
-        foreach (var t in value)
-        {
-            switch (t)
-            {
-                case '&':
-                    dest[w++] = '&';
-                    dest[w++] = 'a';
-                    dest[w++] = 'm';
-                    dest[w++] = 'p';
-                    dest[w++] = ';';
-                    break;
-                case '<':
-                    dest[w++] = '&';
-                    dest[w++] = 'l';
-                    dest[w++] = 't';
-                    dest[w++] = ';';
-                    break;
-                case '>':
-                    dest[w++] = '&';
-                    dest[w++] = 'g';
-                    dest[w++] = 't';
-                    dest[w++] = ';';
-                    break;
-                case '"':
-                    dest[w++] = '&';
-                    dest[w++] = 'q';
-                    dest[w++] = 'u';
-                    dest[w++] = 'o';
-                    dest[w++] = 't';
-                    dest[w++] = ';';
-                    break;
-                case '\'':
-                    dest[w++] = '&';
-                    dest[w++] = '#';
-                    dest[w++] = '3';
-                    dest[w++] = '9';
-                    dest[w++] = ';';
-                    break;
-                default: dest[w++] = t; break;
-            }
-        }
-
-        builder.Advance(required);
+        HtmlEscapeStrategy.TryEscape(value, builder.RemainingSpan, out var written);
+        builder.Advance(written);
         return true;
-    }
-
-    private static int GetHtmlEscapedLength(ReadOnlySpan<char> value)
-    {
-        var extra = 0;
-        foreach (var t in value)
-        {
-            switch (t)
-            {
-                case '&': extra += 4; break;
-                case '<':
-                case '>': extra += 3; break;
-                case '"': extra += 5; break;
-                case '\'': extra += 4; break;
-            }
-        }
-
-        return value.Length + extra;
     }
 
     public static ref ZaSpanStringBuilder AppendCsvEscaped(ref this ZaSpanStringBuilder builder, ReadOnlySpan<char> value)
