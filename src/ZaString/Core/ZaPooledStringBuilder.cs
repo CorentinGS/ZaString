@@ -286,6 +286,24 @@ public sealed class ZaPooledStringBuilder : IDisposable
         return this;
     }
 
+    public ZaPooledStringBuilder AppendUrlEncoded(ReadOnlySpan<char> value)
+    {
+        var required = UrlEscapeStrategy.GetEscapedLength(value);
+        GetAppendSpan(required, out var destination);
+        UrlEscapeStrategy.TryEscape(value, destination, out var written);
+        Advance(written);
+        return this;
+    }
+
+    public ZaPooledStringBuilder AppendFormUrlEncoded(ReadOnlySpan<char> value)
+    {
+        var required = FormUrlEscapeStrategy.GetEscapedLength(value);
+        GetAppendSpan(required, out var destination);
+        FormUrlEscapeStrategy.TryEscape(value, destination, out var written);
+        Advance(written);
+        return this;
+    }
+
     public ZaPooledStringBuilder Append<T>(T value, ReadOnlySpan<char> format = default, IFormatProvider? provider = null) where T : ISpanFormattable
     {
         ThrowIfDisposed();

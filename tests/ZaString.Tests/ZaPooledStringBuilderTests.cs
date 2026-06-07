@@ -211,6 +211,56 @@ public class ZaPooledStringBuilderTests
     }
 
     [Fact]
+    public void AppendUrlEncoded_MatchesStackOwnedBuilder()
+    {
+        var input = "a b/!\u20AC\ud83d\ude00" + new string('\uD800', 1);
+        Span<char> stackBuffer = stackalloc char[256];
+        var stackBuilder = ZaSpanStringBuilder.Create(stackBuffer);
+        stackBuilder.AppendUrlEncoded(input);
+
+        using var pooledBuilder = ZaPooledStringBuilder.Rent(4);
+        pooledBuilder.AppendUrlEncoded(input.AsSpan());
+
+        Assert.Equal(stackBuilder.AsSpan().ToString(), pooledBuilder.ToString());
+    }
+
+    [Fact]
+    public void AppendUrlEncoded_GrowsRentedBuffer()
+    {
+        using var builder = ZaPooledStringBuilder.Rent(1);
+
+        builder.AppendUrlEncoded("//".AsSpan());
+
+        Assert.Equal("%2F%2F", builder.ToString());
+        Assert.True(builder.Capacity >= 6);
+    }
+
+    [Fact]
+    public void AppendFormUrlEncoded_MatchesStackOwnedBuilder()
+    {
+        var input = "a b/!\u20AC\ud83d\ude00" + new string('\uD800', 1);
+        Span<char> stackBuffer = stackalloc char[256];
+        var stackBuilder = ZaSpanStringBuilder.Create(stackBuffer);
+        stackBuilder.AppendFormUrlEncoded(input);
+
+        using var pooledBuilder = ZaPooledStringBuilder.Rent(4);
+        pooledBuilder.AppendFormUrlEncoded(input.AsSpan());
+
+        Assert.Equal(stackBuilder.AsSpan().ToString(), pooledBuilder.ToString());
+    }
+
+    [Fact]
+    public void AppendFormUrlEncoded_GrowsRentedBuffer()
+    {
+        using var builder = ZaPooledStringBuilder.Rent(1);
+
+        builder.AppendFormUrlEncoded(" //".AsSpan());
+
+        Assert.Equal("+%2F%2F", builder.ToString());
+        Assert.True(builder.Capacity >= 7);
+    }
+
+    [Fact]
     public void Append_Char_AppendsCorrectly()
     {
         using var builder = ZaPooledStringBuilder.Rent(4);
