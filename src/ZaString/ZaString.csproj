@@ -30,6 +30,7 @@
 
         <!-- MinVer configuration -->
         <MinVerTagPrefix>v</MinVerTagPrefix>
+        <MinVerMinimumMajorMinor>0.3</MinVerMinimumMajorMinor>
         <MinVerDefaultPreReleaseIdentifiers>preview.0</MinVerDefaultPreReleaseIdentifiers>
     </PropertyGroup>
 
