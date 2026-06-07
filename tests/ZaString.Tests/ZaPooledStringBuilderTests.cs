@@ -1,6 +1,7 @@
 using System.Buffers;
 using System.Globalization;
 using ZaString.Core;
+using ZaString.Extensions;
 
 namespace ZaString.Tests;
 
@@ -132,6 +133,131 @@ public class ZaPooledStringBuilderTests
         builder.Append(span);
         Assert.Equal("World", builder.ToString());
         Assert.Equal(5, builder.Length);
+    }
+
+    [Fact]
+    public void AppendJsonEscaped_MatchesStackOwnedBuilder()
+    {
+        const string input = "quote: \" slash: \\ newline: \n separator: \u2028";
+        Span<char> stackBuffer = stackalloc char[128];
+        var stackBuilder = ZaSpanStringBuilder.Create(stackBuffer);
+        stackBuilder.AppendJsonEscaped(input);
+
+        using var pooledBuilder = ZaPooledStringBuilder.Rent(4);
+        pooledBuilder.AppendJsonEscaped(input.AsSpan());
+
+        Assert.Equal(stackBuilder.AsSpan().ToString(), pooledBuilder.ToString());
+    }
+
+    [Fact]
+    public void AppendJsonEscaped_GrowsRentedBuffer()
+    {
+        using var builder = ZaPooledStringBuilder.Rent(1);
+
+        builder.AppendJsonEscaped("\n\n\n".AsSpan());
+
+        Assert.Equal("\\n\\n\\n", builder.ToString());
+        Assert.True(builder.Capacity >= 6);
+    }
+
+    [Fact]
+    public void AppendHtmlEscaped_MatchesStackOwnedBuilder()
+    {
+        const string input = "<tag attr=\"value\">Tom & 'Jerry'</tag>";
+        Span<char> stackBuffer = stackalloc char[128];
+        var stackBuilder = ZaSpanStringBuilder.Create(stackBuffer);
+        stackBuilder.AppendHtmlEscaped(input);
+
+        using var pooledBuilder = ZaPooledStringBuilder.Rent(4);
+        pooledBuilder.AppendHtmlEscaped(input.AsSpan());
+
+        Assert.Equal(stackBuilder.AsSpan().ToString(), pooledBuilder.ToString());
+    }
+
+    [Fact]
+    public void AppendHtmlEscaped_GrowsRentedBuffer()
+    {
+        using var builder = ZaPooledStringBuilder.Rent(1);
+
+        builder.AppendHtmlEscaped("&&".AsSpan());
+
+        Assert.Equal("&amp;&amp;", builder.ToString());
+        Assert.True(builder.Capacity >= 10);
+    }
+
+    [Fact]
+    public void AppendCsvEscaped_MatchesStackOwnedBuilder()
+    {
+        const string input = " value, \"quoted\"\n";
+        Span<char> stackBuffer = stackalloc char[128];
+        var stackBuilder = ZaSpanStringBuilder.Create(stackBuffer);
+        stackBuilder.AppendCsvEscaped(input);
+
+        using var pooledBuilder = ZaPooledStringBuilder.Rent(4);
+        pooledBuilder.AppendCsvEscaped(input.AsSpan());
+
+        Assert.Equal(stackBuilder.AsSpan().ToString(), pooledBuilder.ToString());
+    }
+
+    [Fact]
+    public void AppendCsvEscaped_GrowsRentedBuffer()
+    {
+        using var builder = ZaPooledStringBuilder.Rent(1);
+
+        builder.AppendCsvEscaped("\"\"".AsSpan());
+
+        Assert.Equal("\"\"\"\"\"\"", builder.ToString());
+        Assert.True(builder.Capacity >= 6);
+    }
+
+    [Fact]
+    public void AppendUrlEncoded_MatchesStackOwnedBuilder()
+    {
+        var input = "a b/!\u20AC\ud83d\ude00" + new string('\uD800', 1);
+        Span<char> stackBuffer = stackalloc char[256];
+        var stackBuilder = ZaSpanStringBuilder.Create(stackBuffer);
+        stackBuilder.AppendUrlEncoded(input);
+
+        using var pooledBuilder = ZaPooledStringBuilder.Rent(4);
+        pooledBuilder.AppendUrlEncoded(input.AsSpan());
+
+        Assert.Equal(stackBuilder.AsSpan().ToString(), pooledBuilder.ToString());
+    }
+
+    [Fact]
+    public void AppendUrlEncoded_GrowsRentedBuffer()
+    {
+        using var builder = ZaPooledStringBuilder.Rent(1);
+
+        builder.AppendUrlEncoded("//".AsSpan());
+
+        Assert.Equal("%2F%2F", builder.ToString());
+        Assert.True(builder.Capacity >= 6);
+    }
+
+    [Fact]
+    public void AppendFormUrlEncoded_MatchesStackOwnedBuilder()
+    {
+        var input = "a b/!\u20AC\ud83d\ude00" + new string('\uD800', 1);
+        Span<char> stackBuffer = stackalloc char[256];
+        var stackBuilder = ZaSpanStringBuilder.Create(stackBuffer);
+        stackBuilder.AppendFormUrlEncoded(input);
+
+        using var pooledBuilder = ZaPooledStringBuilder.Rent(4);
+        pooledBuilder.AppendFormUrlEncoded(input.AsSpan());
+
+        Assert.Equal(stackBuilder.AsSpan().ToString(), pooledBuilder.ToString());
+    }
+
+    [Fact]
+    public void AppendFormUrlEncoded_GrowsRentedBuffer()
+    {
+        using var builder = ZaPooledStringBuilder.Rent(1);
+
+        builder.AppendFormUrlEncoded(" //".AsSpan());
+
+        Assert.Equal("+%2F%2F", builder.ToString());
+        Assert.True(builder.Capacity >= 7);
     }
 
     [Fact]

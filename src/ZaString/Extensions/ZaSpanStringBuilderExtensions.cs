@@ -2,6 +2,7 @@ using System.Diagnostics.CodeAnalysis;
 using System.Globalization;
 using System.Runtime.CompilerServices;
 using ZaString.Core;
+using ZaString.Escaping;
 
 namespace ZaString.Extensions;
 
@@ -663,137 +664,15 @@ public static class ZaSpanStringBuilderExtensions
 
     public static bool TryAppendJsonEscaped(ref this ZaSpanStringBuilder builder, ReadOnlySpan<char> value)
     {
-        var needsEscape = value.IndexOfAny("\"\\\b\f\n\r\t".AsSpan()) >= 0;
-        if (!needsEscape)
-        {
-            for (int i = 0; i < value.Length; i++)
-            {
-                if (value[i] < ' ' || value[i] is '\u2028' or '\u2029')
-                {
-                    needsEscape = true;
-                    break;
-                }
-            }
-        }
-
-        if (!needsEscape)
-        {
-            return builder.TryAppend(value);
-        }
-
-        var required = GetJsonEscapedLength(value);
+        var required = JsonEscapeStrategy.GetEscapedLength(value);
         if (required > builder.RemainingSpan.Length)
         {
             return false;
         }
 
-        var dest = builder.RemainingSpan;
-        var w = 0;
-        for (var i = 0; i < value.Length; i++)
-        {
-            var c = value[i];
-            switch (c)
-            {
-                case '"':
-                    dest[w++] = '\\';
-                    dest[w++] = '"';
-                    break;
-                case '\\':
-                    dest[w++] = '\\';
-                    dest[w++] = '\\';
-                    break;
-                case '\b':
-                    dest[w++] = '\\';
-                    dest[w++] = 'b';
-                    break;
-                case '\f':
-                    dest[w++] = '\\';
-                    dest[w++] = 'f';
-                    break;
-                case '\n':
-                    dest[w++] = '\\';
-                    dest[w++] = 'n';
-                    break;
-                case '\r':
-                    dest[w++] = '\\';
-                    dest[w++] = 'r';
-                    break;
-                case '\t':
-                    dest[w++] = '\\';
-                    dest[w++] = 't';
-                    break;
-                case '\u2028':
-                    dest[w++] = '\\';
-                    dest[w++] = 'u';
-                    dest[w++] = '2';
-                    dest[w++] = '0';
-                    dest[w++] = '2';
-                    dest[w++] = '8';
-                    break;
-                case '\u2029':
-                    dest[w++] = '\\';
-                    dest[w++] = 'u';
-                    dest[w++] = '2';
-                    dest[w++] = '0';
-                    dest[w++] = '2';
-                    dest[w++] = '9';
-                    break;
-
-                default:
-                    if (c < ' ')
-                    {
-                        dest[w++] = '\\';
-                        dest[w++] = 'u';
-                        dest[w++] = '0';
-                        dest[w++] = '0';
-                        WriteHexByte((byte)c, dest.Slice(w, 2));
-                        w += 2;
-                    }
-                    else
-                    {
-                        dest[w++] = c;
-                    }
-
-                    break;
-            }
-        }
-
-        builder.Advance(required);
+        JsonEscapeStrategy.TryEscape(value, builder.RemainingSpan, out var written);
+        builder.Advance(written);
         return true;
-    }
-
-    private static int GetJsonEscapedLength(ReadOnlySpan<char> value)
-    {
-        var extra = 0;
-        foreach (var c in value)
-        {
-            switch (c)
-            {
-                case '"':
-                case '\\':
-                case '\b':
-                case '\f':
-                case '\n':
-                case '\r':
-                case '\t':
-                    extra += 1;
-                    break;
-                case '\u2028':
-                case '\u2029':
-                    extra += 5;
-                    break;
-
-                default:
-                    if (c < ' ')
-                    {
-                        extra += 5;
-                    }
-
-                    break;
-            }
-        }
-
-        return value.Length + extra;
     }
 
     private static void WriteHexByte(byte b, Span<char> dest)
@@ -821,81 +700,15 @@ public static class ZaSpanStringBuilderExtensions
 
     public static bool TryAppendHtmlEscaped(ref this ZaSpanStringBuilder builder, ReadOnlySpan<char> value)
     {
-        if (value.IndexOfAny("&<>\"'".AsSpan()) < 0)
-        {
-            return builder.TryAppend(value);
-        }
-
-        var required = GetHtmlEscapedLength(value);
+        var required = HtmlEscapeStrategy.GetEscapedLength(value);
         if (required > builder.RemainingSpan.Length)
         {
             return false;
         }
 
-        var dest = builder.RemainingSpan;
-        var w = 0;
-        foreach (var t in value)
-        {
-            switch (t)
-            {
-                case '&':
-                    dest[w++] = '&';
-                    dest[w++] = 'a';
-                    dest[w++] = 'm';
-                    dest[w++] = 'p';
-                    dest[w++] = ';';
-                    break;
-                case '<':
-                    dest[w++] = '&';
-                    dest[w++] = 'l';
-                    dest[w++] = 't';
-                    dest[w++] = ';';
-                    break;
-                case '>':
-                    dest[w++] = '&';
-                    dest[w++] = 'g';
-                    dest[w++] = 't';
-                    dest[w++] = ';';
-                    break;
-                case '"':
-                    dest[w++] = '&';
-                    dest[w++] = 'q';
-                    dest[w++] = 'u';
-                    dest[w++] = 'o';
-                    dest[w++] = 't';
-                    dest[w++] = ';';
-                    break;
-                case '\'':
-                    dest[w++] = '&';
-                    dest[w++] = '#';
-                    dest[w++] = '3';
-                    dest[w++] = '9';
-                    dest[w++] = ';';
-                    break;
-                default: dest[w++] = t; break;
-            }
-        }
-
-        builder.Advance(required);
+        HtmlEscapeStrategy.TryEscape(value, builder.RemainingSpan, out var written);
+        builder.Advance(written);
         return true;
-    }
-
-    private static int GetHtmlEscapedLength(ReadOnlySpan<char> value)
-    {
-        var extra = 0;
-        foreach (var t in value)
-        {
-            switch (t)
-            {
-                case '&': extra += 4; break;
-                case '<':
-                case '>': extra += 3; break;
-                case '"': extra += 5; break;
-                case '\'': extra += 4; break;
-            }
-        }
-
-        return value.Length + extra;
     }
 
     public static ref ZaSpanStringBuilder AppendCsvEscaped(ref this ZaSpanStringBuilder builder, ReadOnlySpan<char> value)
@@ -910,50 +723,15 @@ public static class ZaSpanStringBuilderExtensions
 
     public static bool TryAppendCsvEscaped(ref this ZaSpanStringBuilder builder, ReadOnlySpan<char> value)
     {
-        var needsQuote = NeedsCsvQuoting(value);
-        if (!needsQuote)
-        {
-            return builder.TryAppend(value);
-        }
-
-        var quoteCount = 0;
-        foreach (var t in value)
-            if (t == '"')
-                quoteCount++;
-
-        var required = value.Length + quoteCount + 2;
+        var required = CsvEscapeStrategy.GetEscapedLength(value);
         if (required > builder.RemainingSpan.Length)
         {
             return false;
         }
 
-        var dest = builder.RemainingSpan;
-        var w = 0;
-        dest[w++] = '"';
-        foreach (var c in value)
-        {
-            dest[w++] = c;
-            if (c == '"')
-            {
-                dest[w++] = '"';
-            }
-        }
-
-        dest[w] = '"';
-        builder.Advance(required);
+        CsvEscapeStrategy.TryEscape(value, builder.RemainingSpan, out var written);
+        builder.Advance(written);
         return true;
-    }
-
-    private static bool NeedsCsvQuoting(ReadOnlySpan<char> value)
-    {
-        if (value.Length == 0) return true;
-        if (char.IsWhiteSpace(value[0]) || char.IsWhiteSpace(value[^1])) return true;
-        foreach (var c in value)
-        {
-            if (c is ',' or '"' or '\n' or '\r') return true;
-        }
-
-        return false;
     }
 
     // URL encoding and composition helpers
@@ -982,61 +760,14 @@ public static class ZaSpanStringBuilderExtensions
 
     public static bool TryAppendUrlEncoded(ref this ZaSpanStringBuilder builder, ReadOnlySpan<char> value)
     {
-        var needsEncoding = false;
-        for (int i = 0; i < value.Length; i++)
-        {
-            if (!IsUnreservedAscii(value[i]))
-            {
-                needsEncoding = true;
-                break;
-            }
-        }
-
-        if (!needsEncoding)
-        {
-            return builder.TryAppend(value);
-        }
-
-        var required = GetUrlEncodedLengthReplacingInvalid(value);
+        var required = UrlEscapeStrategy.GetEscapedLength(value);
         if (required > builder.RemainingSpan.Length)
         {
             return false;
         }
 
-        var dest = builder.RemainingSpan;
-        var w = 0;
-        for (var i = 0; i < value.Length; i++)
-        {
-            var c = value[i];
-            if (c <= 0x7F)
-            {
-                if (IsUnreservedAscii(c))
-                {
-                    dest[w++] = c;
-                }
-                else
-                {
-                    dest[w++] = '%';
-                    WriteHexByte((byte)c, dest.Slice(w, 2));
-                    w += 2;
-                }
-            }
-            else if (char.IsHighSurrogate(c) && i + 1 < value.Length && char.IsLowSurrogate(value[i + 1]))
-            {
-                var low = value[++i];
-                var codePoint = 0x10000 + (c - 0xD800 << 10 | low - 0xDC00);
-                w += PercentEncodeUtf8FromCodePoint(codePoint, dest[w..]);
-            }
-            else
-            {
-                var codePoint = (int)c;
-                w += char.IsSurrogate(c)
-                    ? WriteReplacementChar(dest[w..])
-                    : PercentEncodeUtf8FromCodePoint(codePoint, dest[w..]);
-            }
-        }
-
-        builder.Advance(required);
+        UrlEscapeStrategy.TryEscape(value, builder.RemainingSpan, out var written);
+        builder.Advance(written);
         return true;
     }
 
@@ -1055,143 +786,15 @@ public static class ZaSpanStringBuilderExtensions
 
     public static bool TryAppendFormUrlEncoded(ref this ZaSpanStringBuilder builder, ReadOnlySpan<char> value)
     {
-        var needsEncoding = false;
-        for (int i = 0; i < value.Length; i++)
-        {
-            if (value[i] == ' ' || !IsUnreservedAscii(value[i]))
-            {
-                needsEncoding = true;
-                break;
-            }
-        }
-
-        if (!needsEncoding)
-        {
-            return builder.TryAppend(value);
-        }
-
-        var required = GetFormUrlEncodedLengthReplacingInvalid(value);
+        var required = FormUrlEscapeStrategy.GetEscapedLength(value);
         if (required > builder.RemainingSpan.Length)
         {
             return false;
         }
 
-        var dest = builder.RemainingSpan;
-        var w = 0;
-        for (var i = 0; i < value.Length; i++)
-        {
-            var c = value[i];
-            if (c == ' ')
-            {
-                dest[w++] = '+';
-            }
-            else if (c <= 0x7F)
-            {
-                if (IsUnreservedAscii(c))
-                {
-                    dest[w++] = c;
-                }
-                else
-                {
-                    dest[w++] = '%';
-                    WriteHexByte((byte)c, dest.Slice(w, 2));
-                    w += 2;
-                }
-            }
-            else if (char.IsHighSurrogate(c) && i + 1 < value.Length && char.IsLowSurrogate(value[i + 1]))
-            {
-                var low = value[++i];
-                var codePoint = 0x10000 + (c - 0xD800 << 10 | low - 0xDC00);
-                w += PercentEncodeUtf8FromCodePoint(codePoint, dest[w..]);
-            }
-            else
-            {
-                w += WriteReplacementChar(dest[w..]);
-            }
-        }
-
-        builder.Advance(required);
+        FormUrlEscapeStrategy.TryEscape(value, builder.RemainingSpan, out var written);
+        builder.Advance(written);
         return true;
-    }
-
-    private static int GetFormUrlEncodedLength(ReadOnlySpan<char> value)
-    {
-        var length = 0;
-        for (var i = 0; i < value.Length; i++)
-        {
-            var c = value[i];
-            if (c == ' ')
-            {
-                length += 1;
-            }
-            else if (c <= 0x7F)
-            {
-                length += IsUnreservedAscii(c) ? 1 : 3;
-            }
-            else if (char.IsHighSurrogate(c) && i + 1 < value.Length && char.IsLowSurrogate(value[i + 1]))
-            {
-                length += 4 * 3;
-                i++;
-            }
-            else
-            {
-                length += c <= 0x7FF ? 2 * 3 : 3 * 3;
-            }
-        }
-
-        return length;
-    }
-
-    private static int GetFormUrlEncodedLengthReplacingInvalid(ReadOnlySpan<char> value)
-    {
-        var length = 0;
-        for (var i = 0; i < value.Length; i++)
-        {
-            var c = value[i];
-            if (c == ' ')
-            {
-                length += 1;
-            }
-            else if (c <= 0x7F)
-            {
-                length += IsUnreservedAscii(c) ? 1 : 3;
-            }
-            else if (char.IsHighSurrogate(c) && i + 1 < value.Length && char.IsLowSurrogate(value[i + 1]))
-            {
-                length += 4 * 3;
-                i++;
-            }
-            else
-            {
-                length += 9;
-            }
-        }
-
-        return length;
-    }
-
-    private static int GetUrlEncodedLength(ReadOnlySpan<char> value)
-    {
-        var length = 0;
-        for (var i = 0; i < value.Length; i++)
-        {
-            var c = value[i];
-            if (c <= 0x7F)
-            {
-                length += IsUnreservedAscii(c) ? 1 : 3;
-            }
-            else if (char.IsHighSurrogate(c) && i + 1 < value.Length && char.IsLowSurrogate(value[i + 1]))
-            {
-                length += 4 * 3;
-                i++;
-            }
-            else
-            {
-                length += c <= 0x7FF ? 2 * 3 : 3 * 3;
-            }
-        }
-
-        return length;
     }
 
     private static int GetUrlEncodedLengthReplacingInvalid(ReadOnlySpan<char> value)
