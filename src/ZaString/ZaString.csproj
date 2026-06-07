@@ -1,6 +1,6 @@
 ﻿<Project Sdk="Microsoft.NET.Sdk">
     <PropertyGroup>
-        <TargetFrameworks>net8.0;net9.0;net10.0</TargetFrameworks>
+        <TargetFramework>net10.0</TargetFramework>
         <!-- NOTE: netstandard2.1 was considered but requires too many changes:
              - Code uses C# 10+ features (file-scoped namespaces, global usings)
              - Relies on ISpanFormattable, IUtf8SpanFormattable, InterpolatedStringHandler
@@ -11,7 +11,7 @@
         <PackageId>ZaString</PackageId>
         <Authors>Corentin Giaufer Saubert</Authors>
         <License>MIT</License>
-        <Description>ZaString is a high-performance, zero-allocation string manipulation library for C# that uses Span and ReadOnlySpan for optimal memory efficiency. Built for .NET 8.0+, it provides a fluent API for building strings without heap allocations.</Description>
+        <Description>ZaString is a high-performance, zero-allocation string manipulation library for C# that uses Span and ReadOnlySpan for optimal memory efficiency. Built for .NET 10.0, it provides a fluent API for building strings without heap allocations.</Description>
         <RepositoryUrl>https://github.com/CorentinGS/ZaString</RepositoryUrl>
         <RepositoryType>git</RepositoryType>
         <PackageTags>string;span;performance;zero-allocation;memory-efficient;string-builder</PackageTags>
