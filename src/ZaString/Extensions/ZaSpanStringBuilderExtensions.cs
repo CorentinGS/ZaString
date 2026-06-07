@@ -2,6 +2,7 @@ using System.Diagnostics.CodeAnalysis;
 using System.Globalization;
 using System.Runtime.CompilerServices;
 using ZaString.Core;
+using ZaString.Escaping;
 
 namespace ZaString.Extensions;
 
@@ -663,137 +664,15 @@ public static class ZaSpanStringBuilderExtensions
 
     public static bool TryAppendJsonEscaped(ref this ZaSpanStringBuilder builder, ReadOnlySpan<char> value)
     {
-        var needsEscape = value.IndexOfAny("\"\\\b\f\n\r\t".AsSpan()) >= 0;
-        if (!needsEscape)
-        {
-            for (int i = 0; i < value.Length; i++)
-            {
-                if (value[i] < ' ' || value[i] is '\u2028' or '\u2029')
-                {
-                    needsEscape = true;
-                    break;
-                }
-            }
-        }
-
-        if (!needsEscape)
-        {
-            return builder.TryAppend(value);
-        }
-
-        var required = GetJsonEscapedLength(value);
+        var required = JsonEscapeStrategy.GetEscapedLength(value);
         if (required > builder.RemainingSpan.Length)
         {
             return false;
         }
 
-        var dest = builder.RemainingSpan;
-        var w = 0;
-        for (var i = 0; i < value.Length; i++)
-        {
-            var c = value[i];
-            switch (c)
-            {
-                case '"':
-                    dest[w++] = '\\';
-                    dest[w++] = '"';
-                    break;
-                case '\\':
-                    dest[w++] = '\\';
-                    dest[w++] = '\\';
-                    break;
-                case '\b':
-                    dest[w++] = '\\';
-                    dest[w++] = 'b';
-                    break;
-                case '\f':
-                    dest[w++] = '\\';
-                    dest[w++] = 'f';
-                    break;
-                case '\n':
-                    dest[w++] = '\\';
-                    dest[w++] = 'n';
-                    break;
-                case '\r':
-                    dest[w++] = '\\';
-                    dest[w++] = 'r';
-                    break;
-                case '\t':
-                    dest[w++] = '\\';
-                    dest[w++] = 't';
-                    break;
-                case '\u2028':
-                    dest[w++] = '\\';
-                    dest[w++] = 'u';
-                    dest[w++] = '2';
-                    dest[w++] = '0';
-                    dest[w++] = '2';
-                    dest[w++] = '8';
-                    break;
-                case '\u2029':
-                    dest[w++] = '\\';
-                    dest[w++] = 'u';
-                    dest[w++] = '2';
-                    dest[w++] = '0';
-                    dest[w++] = '2';
-                    dest[w++] = '9';
-                    break;
-
-                default:
-                    if (c < ' ')
-                    {
-                        dest[w++] = '\\';
-                        dest[w++] = 'u';
-                        dest[w++] = '0';
-                        dest[w++] = '0';
-                        WriteHexByte((byte)c, dest.Slice(w, 2));
-                        w += 2;
-                    }
-                    else
-                    {
-                        dest[w++] = c;
-                    }
-
-                    break;
-            }
-        }
-
-        builder.Advance(required);
+        JsonEscapeStrategy.TryEscape(value, builder.RemainingSpan, out var written);
+        builder.Advance(written);
         return true;
-    }
-
-    private static int GetJsonEscapedLength(ReadOnlySpan<char> value)
-    {
-        var extra = 0;
-        foreach (var c in value)
-        {
-            switch (c)
-            {
-                case '"':
-                case '\\':
-                case '\b':
-                case '\f':
-                case '\n':
-                case '\r':
-                case '\t':
-                    extra += 1;
-                    break;
-                case '\u2028':
-                case '\u2029':
-                    extra += 5;
-                    break;
-
-                default:
-                    if (c < ' ')
-                    {
-                        extra += 5;
-                    }
-
-                    break;
-            }
-        }
-
-        return value.Length + extra;
     }
 
     private static void WriteHexByte(byte b, Span<char> dest)
