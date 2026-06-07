@@ -760,61 +760,14 @@ public static class ZaSpanStringBuilderExtensions
 
     public static bool TryAppendUrlEncoded(ref this ZaSpanStringBuilder builder, ReadOnlySpan<char> value)
     {
-        var needsEncoding = false;
-        for (int i = 0; i < value.Length; i++)
-        {
-            if (!IsUnreservedAscii(value[i]))
-            {
-                needsEncoding = true;
-                break;
-            }
-        }
-
-        if (!needsEncoding)
-        {
-            return builder.TryAppend(value);
-        }
-
-        var required = GetUrlEncodedLengthReplacingInvalid(value);
+        var required = UrlEscapeStrategy.GetEscapedLength(value);
         if (required > builder.RemainingSpan.Length)
         {
             return false;
         }
 
-        var dest = builder.RemainingSpan;
-        var w = 0;
-        for (var i = 0; i < value.Length; i++)
-        {
-            var c = value[i];
-            if (c <= 0x7F)
-            {
-                if (IsUnreservedAscii(c))
-                {
-                    dest[w++] = c;
-                }
-                else
-                {
-                    dest[w++] = '%';
-                    WriteHexByte((byte)c, dest.Slice(w, 2));
-                    w += 2;
-                }
-            }
-            else if (char.IsHighSurrogate(c) && i + 1 < value.Length && char.IsLowSurrogate(value[i + 1]))
-            {
-                var low = value[++i];
-                var codePoint = 0x10000 + (c - 0xD800 << 10 | low - 0xDC00);
-                w += PercentEncodeUtf8FromCodePoint(codePoint, dest[w..]);
-            }
-            else
-            {
-                var codePoint = (int)c;
-                w += char.IsSurrogate(c)
-                    ? WriteReplacementChar(dest[w..])
-                    : PercentEncodeUtf8FromCodePoint(codePoint, dest[w..]);
-            }
-        }
-
-        builder.Advance(required);
+        UrlEscapeStrategy.TryEscape(value, builder.RemainingSpan, out var written);
+        builder.Advance(written);
         return true;
     }
 
@@ -942,30 +895,6 @@ public static class ZaSpanStringBuilderExtensions
             else
             {
                 length += 9;
-            }
-        }
-
-        return length;
-    }
-
-    private static int GetUrlEncodedLength(ReadOnlySpan<char> value)
-    {
-        var length = 0;
-        for (var i = 0; i < value.Length; i++)
-        {
-            var c = value[i];
-            if (c <= 0x7F)
-            {
-                length += IsUnreservedAscii(c) ? 1 : 3;
-            }
-            else if (char.IsHighSurrogate(c) && i + 1 < value.Length && char.IsLowSurrogate(value[i + 1]))
-            {
-                length += 4 * 3;
-                i++;
-            }
-            else
-            {
-                length += c <= 0x7FF ? 2 * 3 : 3 * 3;
             }
         }
 
