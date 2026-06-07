@@ -1,6 +1,7 @@
 using System.Buffers;
 using System.Globalization;
 using System.Text;
+using ZaString.Escaping;
 
 namespace ZaString.Core;
 
@@ -92,6 +93,31 @@ public sealed class ZaPooledStringBuilder : IDisposable
             throw new ArgumentOutOfRangeException(nameof(count));
 
         Length -= count;
+    }
+
+    /// <summary>
+    ///     Reserves a writable span of the specified size, growing the rented buffer if needed.
+    ///     Call <see cref="Advance" /> with the number of characters written to commit the append.
+    /// </summary>
+    public ZaPooledStringBuilder GetAppendSpan(int size, out Span<char> writeSpan)
+    {
+        ThrowIfDisposed();
+        ArgumentOutOfRangeException.ThrowIfNegative(size);
+
+        EnsureCapacity(size);
+        writeSpan = _buffer.AsSpan(Length, size);
+        return this;
+    }
+
+    public void Advance(int count)
+    {
+        ThrowIfDisposed();
+        if ((uint)count > (uint)(_buffer.Length - Length))
+        {
+            throw new ArgumentOutOfRangeException(nameof(count));
+        }
+
+        Length += count;
     }
 
     /// <summary>
@@ -231,6 +257,15 @@ public sealed class ZaPooledStringBuilder : IDisposable
     {
         ThrowIfDisposed();
         return Append(value ? "true" : "false");
+    }
+
+    public ZaPooledStringBuilder AppendJsonEscaped(ReadOnlySpan<char> value)
+    {
+        var required = JsonEscapeStrategy.GetEscapedLength(value);
+        GetAppendSpan(required, out var destination);
+        JsonEscapeStrategy.TryEscape(value, destination, out var written);
+        Advance(written);
+        return this;
     }
 
     public ZaPooledStringBuilder Append<T>(T value, ReadOnlySpan<char> format = default, IFormatProvider? provider = null) where T : ISpanFormattable

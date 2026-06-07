@@ -1,6 +1,7 @@
 using System.Buffers;
 using System.Globalization;
 using ZaString.Core;
+using ZaString.Extensions;
 
 namespace ZaString.Tests;
 
@@ -132,6 +133,31 @@ public class ZaPooledStringBuilderTests
         builder.Append(span);
         Assert.Equal("World", builder.ToString());
         Assert.Equal(5, builder.Length);
+    }
+
+    [Fact]
+    public void AppendJsonEscaped_MatchesStackOwnedBuilder()
+    {
+        const string input = "quote: \" slash: \\ newline: \n separator: \u2028";
+        Span<char> stackBuffer = stackalloc char[128];
+        var stackBuilder = ZaSpanStringBuilder.Create(stackBuffer);
+        stackBuilder.AppendJsonEscaped(input);
+
+        using var pooledBuilder = ZaPooledStringBuilder.Rent(4);
+        pooledBuilder.AppendJsonEscaped(input.AsSpan());
+
+        Assert.Equal(stackBuilder.AsSpan().ToString(), pooledBuilder.ToString());
+    }
+
+    [Fact]
+    public void AppendJsonEscaped_GrowsRentedBuffer()
+    {
+        using var builder = ZaPooledStringBuilder.Rent(1);
+
+        builder.AppendJsonEscaped("\n\n\n".AsSpan());
+
+        Assert.Equal("\\n\\n\\n", builder.ToString());
+        Assert.True(builder.Capacity >= 6);
     }
 
     [Fact]
