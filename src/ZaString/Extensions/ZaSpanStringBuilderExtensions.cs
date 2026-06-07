@@ -723,50 +723,15 @@ public static class ZaSpanStringBuilderExtensions
 
     public static bool TryAppendCsvEscaped(ref this ZaSpanStringBuilder builder, ReadOnlySpan<char> value)
     {
-        var needsQuote = NeedsCsvQuoting(value);
-        if (!needsQuote)
-        {
-            return builder.TryAppend(value);
-        }
-
-        var quoteCount = 0;
-        foreach (var t in value)
-            if (t == '"')
-                quoteCount++;
-
-        var required = value.Length + quoteCount + 2;
+        var required = CsvEscapeStrategy.GetEscapedLength(value);
         if (required > builder.RemainingSpan.Length)
         {
             return false;
         }
 
-        var dest = builder.RemainingSpan;
-        var w = 0;
-        dest[w++] = '"';
-        foreach (var c in value)
-        {
-            dest[w++] = c;
-            if (c == '"')
-            {
-                dest[w++] = '"';
-            }
-        }
-
-        dest[w] = '"';
-        builder.Advance(required);
+        CsvEscapeStrategy.TryEscape(value, builder.RemainingSpan, out var written);
+        builder.Advance(written);
         return true;
-    }
-
-    private static bool NeedsCsvQuoting(ReadOnlySpan<char> value)
-    {
-        if (value.Length == 0) return true;
-        if (char.IsWhiteSpace(value[0]) || char.IsWhiteSpace(value[^1])) return true;
-        foreach (var c in value)
-        {
-            if (c is ',' or '"' or '\n' or '\r') return true;
-        }
-
-        return false;
     }
 
     // URL encoding and composition helpers
