@@ -161,6 +161,56 @@ public class ZaPooledStringBuilderTests
     }
 
     [Fact]
+    public void AppendHtmlEscaped_MatchesStackOwnedBuilder()
+    {
+        const string input = "<tag attr=\"value\">Tom & 'Jerry'</tag>";
+        Span<char> stackBuffer = stackalloc char[128];
+        var stackBuilder = ZaSpanStringBuilder.Create(stackBuffer);
+        stackBuilder.AppendHtmlEscaped(input);
+
+        using var pooledBuilder = ZaPooledStringBuilder.Rent(4);
+        pooledBuilder.AppendHtmlEscaped(input.AsSpan());
+
+        Assert.Equal(stackBuilder.AsSpan().ToString(), pooledBuilder.ToString());
+    }
+
+    [Fact]
+    public void AppendHtmlEscaped_GrowsRentedBuffer()
+    {
+        using var builder = ZaPooledStringBuilder.Rent(1);
+
+        builder.AppendHtmlEscaped("&&".AsSpan());
+
+        Assert.Equal("&amp;&amp;", builder.ToString());
+        Assert.True(builder.Capacity >= 10);
+    }
+
+    [Fact]
+    public void AppendCsvEscaped_MatchesStackOwnedBuilder()
+    {
+        const string input = " value, \"quoted\"\n";
+        Span<char> stackBuffer = stackalloc char[128];
+        var stackBuilder = ZaSpanStringBuilder.Create(stackBuffer);
+        stackBuilder.AppendCsvEscaped(input);
+
+        using var pooledBuilder = ZaPooledStringBuilder.Rent(4);
+        pooledBuilder.AppendCsvEscaped(input.AsSpan());
+
+        Assert.Equal(stackBuilder.AsSpan().ToString(), pooledBuilder.ToString());
+    }
+
+    [Fact]
+    public void AppendCsvEscaped_GrowsRentedBuffer()
+    {
+        using var builder = ZaPooledStringBuilder.Rent(1);
+
+        builder.AppendCsvEscaped("\"\"".AsSpan());
+
+        Assert.Equal("\"\"\"\"\"\"", builder.ToString());
+        Assert.True(builder.Capacity >= 6);
+    }
+
+    [Fact]
     public void Append_Char_AppendsCorrectly()
     {
         using var builder = ZaPooledStringBuilder.Rent(4);

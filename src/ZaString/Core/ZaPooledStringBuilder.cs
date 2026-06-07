@@ -268,6 +268,24 @@ public sealed class ZaPooledStringBuilder : IDisposable
         return this;
     }
 
+    public ZaPooledStringBuilder AppendHtmlEscaped(ReadOnlySpan<char> value)
+    {
+        var required = HtmlEscapeStrategy.GetEscapedLength(value);
+        GetAppendSpan(required, out var destination);
+        HtmlEscapeStrategy.TryEscape(value, destination, out var written);
+        Advance(written);
+        return this;
+    }
+
+    public ZaPooledStringBuilder AppendCsvEscaped(ReadOnlySpan<char> value)
+    {
+        var required = CsvEscapeStrategy.GetEscapedLength(value);
+        GetAppendSpan(required, out var destination);
+        CsvEscapeStrategy.TryEscape(value, destination, out var written);
+        Advance(written);
+        return this;
+    }
+
     public ZaPooledStringBuilder Append<T>(T value, ReadOnlySpan<char> format = default, IFormatProvider? provider = null) where T : ISpanFormattable
     {
         ThrowIfDisposed();
