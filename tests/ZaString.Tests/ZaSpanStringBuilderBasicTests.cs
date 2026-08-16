@@ -174,6 +174,45 @@ public class ZaSpanStringBuilderBasicTests
     }
 
     [Fact]
+    public void Advance_NegativeCount_ThrowsArgumentOutOfRangeException()
+    {
+        Span<char> buffer = stackalloc char[100];
+        var builder = ZaSpanStringBuilder.Create(buffer);
+
+        var threw = false;
+        try
+        {
+            builder.Advance(-1);
+        }
+        catch (ArgumentOutOfRangeException)
+        {
+            threw = true;
+        }
+
+        Assert.True(threw);
+    }
+
+    [Fact]
+    public void Advance_ExceedsCapacity_ThrowsArgumentOutOfRangeException()
+    {
+        Span<char> buffer = stackalloc char[10];
+        var builder = ZaSpanStringBuilder.Create(buffer);
+        builder.Append("Hello");
+
+        var threw = false;
+        try
+        {
+            builder.Advance(10);
+        }
+        catch (ArgumentOutOfRangeException)
+        {
+            threw = true;
+        }
+
+        Assert.True(threw);
+    }
+
+    [Fact]
     public void Append_ExactBufferSize_Works()
     {
         Span<char> buffer = stackalloc char[5];
@@ -284,7 +323,7 @@ public class ZaSpanStringBuilderBasicTests
     }
 
     [Fact]
-    public void Indexer_NegativeIndex_ThrowsIndexOutOfRangeException()
+    public void Indexer_NegativeIndex_ThrowsArgumentOutOfRangeException()
     {
         Span<char> buffer = stackalloc char[100];
         var builder = ZaSpanStringBuilder.Create(buffer);
@@ -297,7 +336,7 @@ public class ZaSpanStringBuilderBasicTests
         {
             var _ = builder[-1];
         }
-        catch (IndexOutOfRangeException)
+        catch (ArgumentOutOfRangeException)
         {
             threwForRead = true;
         }
@@ -306,7 +345,7 @@ public class ZaSpanStringBuilderBasicTests
         {
             builder[-1] = 'X';
         }
-        catch (IndexOutOfRangeException)
+        catch (ArgumentOutOfRangeException)
         {
             threwForWrite = true;
         }
@@ -316,7 +355,7 @@ public class ZaSpanStringBuilderBasicTests
     }
 
     [Fact]
-    public void Indexer_IndexEqualToLength_ThrowsIndexOutOfRangeException()
+    public void Indexer_IndexEqualToLength_ThrowsArgumentOutOfRangeException()
     {
         Span<char> buffer = stackalloc char[100];
         var builder = ZaSpanStringBuilder.Create(buffer);
@@ -329,7 +368,7 @@ public class ZaSpanStringBuilderBasicTests
         {
             var _ = builder[4];
         }
-        catch (IndexOutOfRangeException)
+        catch (ArgumentOutOfRangeException)
         {
             threwForRead = true;
         }
@@ -338,7 +377,7 @@ public class ZaSpanStringBuilderBasicTests
         {
             builder[4] = 'X';
         }
-        catch (IndexOutOfRangeException)
+        catch (ArgumentOutOfRangeException)
         {
             threwForWrite = true;
         }
@@ -348,7 +387,7 @@ public class ZaSpanStringBuilderBasicTests
     }
 
     [Fact]
-    public void Indexer_IndexGreaterThanLength_ThrowsIndexOutOfRangeException()
+    public void Indexer_IndexGreaterThanLength_ThrowsArgumentOutOfRangeException()
     {
         Span<char> buffer = stackalloc char[100];
         var builder = ZaSpanStringBuilder.Create(buffer);
@@ -361,7 +400,7 @@ public class ZaSpanStringBuilderBasicTests
         {
             var _ = builder[10];
         }
-        catch (IndexOutOfRangeException)
+        catch (ArgumentOutOfRangeException)
         {
             threwForRead = true;
         }
@@ -370,7 +409,7 @@ public class ZaSpanStringBuilderBasicTests
         {
             builder[10] = 'X';
         }
-        catch (IndexOutOfRangeException)
+        catch (ArgumentOutOfRangeException)
         {
             threwForWrite = true;
         }
@@ -380,7 +419,7 @@ public class ZaSpanStringBuilderBasicTests
     }
 
     [Fact]
-    public void Indexer_EmptyBuilder_ThrowsIndexOutOfRangeException()
+    public void Indexer_EmptyBuilder_ThrowsArgumentOutOfRangeException()
     {
         Span<char> buffer = stackalloc char[100];
         var builder = ZaSpanStringBuilder.Create(buffer);
@@ -392,7 +431,7 @@ public class ZaSpanStringBuilderBasicTests
         {
             var _ = builder[0];
         }
-        catch (IndexOutOfRangeException)
+        catch (ArgumentOutOfRangeException)
         {
             threwForRead = true;
         }
@@ -401,7 +440,7 @@ public class ZaSpanStringBuilderBasicTests
         {
             builder[0] = 'X';
         }
-        catch (IndexOutOfRangeException)
+        catch (ArgumentOutOfRangeException)
         {
             threwForWrite = true;
         }

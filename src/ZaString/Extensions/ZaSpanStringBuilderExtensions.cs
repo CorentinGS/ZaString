@@ -1,3 +1,4 @@
+using System.Diagnostics.CodeAnalysis;
 using System.Globalization;
 using System.Runtime.CompilerServices;
 using ZaString.Core;
@@ -116,7 +117,7 @@ public static class ZaSpanStringBuilderExtensions
             ThrowOutOfRangeException();
         }
 
-        builder.Advance(-count);
+        builder.SetLength(builder.Length - count);
         return ref builder;
     }
 
@@ -234,6 +235,31 @@ public static class ZaSpanStringBuilderExtensions
 
         return ref builder;
     }
+
+    /// <summary>
+    ///     Appends the elements of <paramref name="values" /> separated by <paramref name="separator" />.
+    ///     Null elements are treated as empty strings.
+    /// </summary>
+    public static ref ZaSpanStringBuilder AppendJoin(ref this ZaSpanStringBuilder builder, ReadOnlySpan<char> separator, IEnumerable<string?> values)
+    {
+        var isFirst = true;
+        foreach (var s in values)
+        {
+            if (!isFirst)
+            {
+                builder.Append(separator);
+            }
+
+            isFirst = false;
+            if (s is not null)
+            {
+                builder.Append(s);
+            }
+        }
+
+        return ref builder;
+    }
+
     /// <summary>
     ///     Attempts to append a read-only span of characters to the builder without throwing.
     /// </summary>
@@ -329,9 +355,8 @@ public static class ZaSpanStringBuilderExtensions
     {
         var valueLength = value?.Length ?? 0;
         var newlineLength = Environment.NewLine.Length;
-        var required = valueLength + newlineLength;
 
-        if (required > builder.RemainingSpan.Length)
+        if (!HasCapacityForLine(valueLength, newlineLength, builder.RemainingSpan.Length))
         {
             return false;
         }
@@ -346,6 +371,12 @@ public static class ZaSpanStringBuilderExtensions
         builder.Advance(newlineLength);
         return true;
     }
+
+    private static bool HasCapacityForLine(int valueLength, int newlineLength, int remainingLength)
+    {
+        return valueLength <= remainingLength && newlineLength <= remainingLength - valueLength;
+    }
+
     /// <summary>
     ///     Appends a read-only span of characters to the builder.
     /// </summary>
@@ -605,6 +636,7 @@ public static class ZaSpanStringBuilderExtensions
     /// <summary>
     ///     Throws a standardized exception for out-of-range errors.
     /// </summary>
+    [DoesNotReturn]
     private static void ThrowOutOfRangeException()
     {
         throw new ArgumentOutOfRangeException("value", "The destination buffer is too small.");
@@ -631,17 +663,28 @@ public static class ZaSpanStringBuilderExtensions
 
     public static bool TryAppendJsonEscaped(ref this ZaSpanStringBuilder builder, ReadOnlySpan<char> value)
     {
+        var needsEscape = value.IndexOfAny("\"\\\b\f\n\r\t".AsSpan()) >= 0;
+        if (!needsEscape)
+        {
+            for (int i = 0; i < value.Length; i++)
+            {
+                if (value[i] < ' ' || value[i] is '\u2028' or '\u2029')
+                {
+                    needsEscape = true;
+                    break;
+                }
+            }
+        }
+
+        if (!needsEscape)
+        {
+            return builder.TryAppend(value);
+        }
+
         var required = GetJsonEscapedLength(value);
         if (required > builder.RemainingSpan.Length)
         {
             return false;
-        }
-
-        if (required == value.Length)
-        {
-            value.CopyTo(builder.RemainingSpan);
-            builder.Advance(value.Length);
-            return true;
         }
 
         var dest = builder.RemainingSpan;
@@ -678,6 +721,22 @@ public static class ZaSpanStringBuilderExtensions
                 case '\t':
                     dest[w++] = '\\';
                     dest[w++] = 't';
+                    break;
+                case '\u2028':
+                    dest[w++] = '\\';
+                    dest[w++] = 'u';
+                    dest[w++] = '2';
+                    dest[w++] = '0';
+                    dest[w++] = '2';
+                    dest[w++] = '8';
+                    break;
+                case '\u2029':
+                    dest[w++] = '\\';
+                    dest[w++] = 'u';
+                    dest[w++] = '2';
+                    dest[w++] = '0';
+                    dest[w++] = '2';
+                    dest[w++] = '9';
                     break;
 
                 default:
@@ -717,13 +776,17 @@ public static class ZaSpanStringBuilderExtensions
                 case '\n':
                 case '\r':
                 case '\t':
-                    extra += 1; // becomes two chars instead of one
+                    extra += 1;
+                    break;
+                case '\u2028':
+                case '\u2029':
+                    extra += 5;
                     break;
 
                 default:
                     if (c < ' ')
                     {
-                        extra += 5; // \u00XX adds 5 extra over the original 1
+                        extra += 5;
                     }
 
                     break;
@@ -758,17 +821,15 @@ public static class ZaSpanStringBuilderExtensions
 
     public static bool TryAppendHtmlEscaped(ref this ZaSpanStringBuilder builder, ReadOnlySpan<char> value)
     {
+        if (value.IndexOfAny("&<>\"'".AsSpan()) < 0)
+        {
+            return builder.TryAppend(value);
+        }
+
         var required = GetHtmlEscapedLength(value);
         if (required > builder.RemainingSpan.Length)
         {
             return false;
-        }
-
-        if (required == value.Length)
-        {
-            value.CopyTo(builder.RemainingSpan);
-            builder.Advance(value.Length);
-            return true;
         }
 
         var dest = builder.RemainingSpan;
@@ -783,19 +844,19 @@ public static class ZaSpanStringBuilderExtensions
                     dest[w++] = 'm';
                     dest[w++] = 'p';
                     dest[w++] = ';';
-                    break; // &amp;
+                    break;
                 case '<':
                     dest[w++] = '&';
                     dest[w++] = 'l';
                     dest[w++] = 't';
                     dest[w++] = ';';
-                    break; // &lt;
+                    break;
                 case '>':
                     dest[w++] = '&';
                     dest[w++] = 'g';
                     dest[w++] = 't';
                     dest[w++] = ';';
-                    break; // &gt;
+                    break;
                 case '"':
                     dest[w++] = '&';
                     dest[w++] = 'q';
@@ -803,14 +864,14 @@ public static class ZaSpanStringBuilderExtensions
                     dest[w++] = 'o';
                     dest[w++] = 't';
                     dest[w++] = ';';
-                    break; // &quot;
+                    break;
                 case '\'':
                     dest[w++] = '&';
                     dest[w++] = '#';
                     dest[w++] = '3';
                     dest[w++] = '9';
                     dest[w++] = ';';
-                    break; // &#39;
+                    break;
                 default: dest[w++] = t; break;
             }
         }
@@ -826,11 +887,11 @@ public static class ZaSpanStringBuilderExtensions
         {
             switch (t)
             {
-                case '&': extra += 4; break; // &amp; (5) - 1 original = +4
+                case '&': extra += 4; break;
                 case '<':
-                case '>': extra += 3; break; // &lt; or &gt; (4) -1 = +3
-                case '"': extra += 5; break; // &quot; (6) -1 = +5
-                case '\'': extra += 4; break; // &#39; (5) -1 = +4
+                case '>': extra += 3; break;
+                case '"': extra += 5; break;
+                case '\'': extra += 4; break;
             }
         }
 
@@ -885,7 +946,7 @@ public static class ZaSpanStringBuilderExtensions
 
     private static bool NeedsCsvQuoting(ReadOnlySpan<char> value)
     {
-        if (value.Length == 0) return false;
+        if (value.Length == 0) return true;
         if (char.IsWhiteSpace(value[0]) || char.IsWhiteSpace(value[^1])) return true;
         foreach (var c in value)
         {
@@ -921,7 +982,22 @@ public static class ZaSpanStringBuilderExtensions
 
     public static bool TryAppendUrlEncoded(ref this ZaSpanStringBuilder builder, ReadOnlySpan<char> value)
     {
-        var required = GetUrlEncodedLength(value);
+        var needsEncoding = false;
+        for (int i = 0; i < value.Length; i++)
+        {
+            if (!IsUnreservedAscii(value[i]))
+            {
+                needsEncoding = true;
+                break;
+            }
+        }
+
+        if (!needsEncoding)
+        {
+            return builder.TryAppend(value);
+        }
+
+        var required = GetUrlEncodedLengthReplacingInvalid(value);
         if (required > builder.RemainingSpan.Length)
         {
             return false;
@@ -954,12 +1030,144 @@ public static class ZaSpanStringBuilderExtensions
             else
             {
                 var codePoint = (int)c;
-                w += PercentEncodeUtf8FromCodePoint(codePoint, dest[w..]);
+                w += char.IsSurrogate(c)
+                    ? WriteReplacementChar(dest[w..])
+                    : PercentEncodeUtf8FromCodePoint(codePoint, dest[w..]);
             }
         }
 
         builder.Advance(required);
         return true;
+    }
+
+    /// <summary>
+    ///     Appends a form URL-encoded string (spaces encoded as '+' instead of '%20').
+    /// </summary>
+    public static ref ZaSpanStringBuilder AppendFormUrlEncoded(ref this ZaSpanStringBuilder builder, ReadOnlySpan<char> value)
+    {
+        if (!TryAppendFormUrlEncoded(ref builder, value))
+        {
+            ThrowOutOfRangeException();
+        }
+
+        return ref builder;
+    }
+
+    public static bool TryAppendFormUrlEncoded(ref this ZaSpanStringBuilder builder, ReadOnlySpan<char> value)
+    {
+        var needsEncoding = false;
+        for (int i = 0; i < value.Length; i++)
+        {
+            if (value[i] == ' ' || !IsUnreservedAscii(value[i]))
+            {
+                needsEncoding = true;
+                break;
+            }
+        }
+
+        if (!needsEncoding)
+        {
+            return builder.TryAppend(value);
+        }
+
+        var required = GetFormUrlEncodedLengthReplacingInvalid(value);
+        if (required > builder.RemainingSpan.Length)
+        {
+            return false;
+        }
+
+        var dest = builder.RemainingSpan;
+        var w = 0;
+        for (var i = 0; i < value.Length; i++)
+        {
+            var c = value[i];
+            if (c == ' ')
+            {
+                dest[w++] = '+';
+            }
+            else if (c <= 0x7F)
+            {
+                if (IsUnreservedAscii(c))
+                {
+                    dest[w++] = c;
+                }
+                else
+                {
+                    dest[w++] = '%';
+                    WriteHexByte((byte)c, dest.Slice(w, 2));
+                    w += 2;
+                }
+            }
+            else if (char.IsHighSurrogate(c) && i + 1 < value.Length && char.IsLowSurrogate(value[i + 1]))
+            {
+                var low = value[++i];
+                var codePoint = 0x10000 + (c - 0xD800 << 10 | low - 0xDC00);
+                w += PercentEncodeUtf8FromCodePoint(codePoint, dest[w..]);
+            }
+            else
+            {
+                w += WriteReplacementChar(dest[w..]);
+            }
+        }
+
+        builder.Advance(required);
+        return true;
+    }
+
+    private static int GetFormUrlEncodedLength(ReadOnlySpan<char> value)
+    {
+        var length = 0;
+        for (var i = 0; i < value.Length; i++)
+        {
+            var c = value[i];
+            if (c == ' ')
+            {
+                length += 1;
+            }
+            else if (c <= 0x7F)
+            {
+                length += IsUnreservedAscii(c) ? 1 : 3;
+            }
+            else if (char.IsHighSurrogate(c) && i + 1 < value.Length && char.IsLowSurrogate(value[i + 1]))
+            {
+                length += 4 * 3;
+                i++;
+            }
+            else
+            {
+                length += c <= 0x7FF ? 2 * 3 : 3 * 3;
+            }
+        }
+
+        return length;
+    }
+
+    private static int GetFormUrlEncodedLengthReplacingInvalid(ReadOnlySpan<char> value)
+    {
+        var length = 0;
+        for (var i = 0; i < value.Length; i++)
+        {
+            var c = value[i];
+            if (c == ' ')
+            {
+                length += 1;
+            }
+            else if (c <= 0x7F)
+            {
+                length += IsUnreservedAscii(c) ? 1 : 3;
+            }
+            else if (char.IsHighSurrogate(c) && i + 1 < value.Length && char.IsLowSurrogate(value[i + 1]))
+            {
+                length += 4 * 3;
+                i++;
+            }
+            else
+            {
+                length += 9;
+            }
+        }
+
+        return length;
     }
 
     private static int GetUrlEncodedLength(ReadOnlySpan<char> value)
@@ -974,13 +1182,36 @@ public static class ZaSpanStringBuilderExtensions
             }
             else if (char.IsHighSurrogate(c) && i + 1 < value.Length && char.IsLowSurrogate(value[i + 1]))
             {
-                length += 4 * 3; // 4 UTF-8 bytes -> %HH %HH %HH %HH
-                i++; // consume low surrogate
+                length += 4 * 3;
+                i++;
             }
             else
             {
-                // Non-surrogate BMP char: 0x80..0x7FF => 2 bytes; 0x800..0xFFFF => 3 bytes
                 length += c <= 0x7FF ? 2 * 3 : 3 * 3;
+            }
+        }
+
+        return length;
+    }
+
+    private static int GetUrlEncodedLengthReplacingInvalid(ReadOnlySpan<char> value)
+    {
+        var length = 0;
+        for (var i = 0; i < value.Length; i++)
+        {
+            var c = value[i];
+            if (c <= 0x7F)
+            {
+                length += IsUnreservedAscii(c) ? 1 : 3;
+            }
+            else if (char.IsHighSurrogate(c) && i + 1 < value.Length && char.IsLowSurrogate(value[i + 1]))
+            {
+                length += 4 * 3;
+                i++;
+            }
+            else
+            {
+                length += 9;
             }
         }
 
@@ -991,7 +1222,6 @@ public static class ZaSpanStringBuilderExtensions
     {
         switch (codePoint)
         {
-            // Returns number of chars written to dest (multiple of 3)
             case <= 0x7F:
                 dest[0] = '%';
                 WriteHexByte((byte)codePoint, dest.Slice(1, 2));
@@ -1041,6 +1271,115 @@ public static class ZaSpanStringBuilderExtensions
         }
     }
 
+    private static int WriteReplacementChar(Span<char> dest)
+    {
+        dest[0] = '%';
+        dest[1] = 'E';
+        dest[2] = 'F';
+        dest[3] = '%';
+        dest[4] = 'B';
+        dest[5] = 'F';
+        dest[6] = '%';
+        dest[7] = 'B';
+        dest[8] = 'D';
+        return 9;
+    }
+
+    private static int WriteUrlEncoded(ReadOnlySpan<char> value, Span<char> dest)
+    {
+        var w = 0;
+        for (var i = 0; i < value.Length; i++)
+        {
+            var c = value[i];
+            if (c <= 0x7F)
+            {
+                if (IsUnreservedAscii(c))
+                {
+                    dest[w++] = c;
+                }
+                else
+                {
+                    dest[w++] = '%';
+                    WriteHexByte((byte)c, dest.Slice(w, 2));
+                    w += 2;
+                }
+            }
+            else if (char.IsHighSurrogate(c) && i + 1 < value.Length && char.IsLowSurrogate(value[i + 1]))
+            {
+                var low = value[++i];
+                var codePoint = 0x10000 + (c - 0xD800 << 10 | low - 0xDC00);
+                w += PercentEncodeUtf8FromCodePoint(codePoint, dest[w..]);
+            }
+            else
+            {
+                var codePoint = (int)c;
+                w += PercentEncodeUtf8FromCodePoint(codePoint, dest[w..]);
+            }
+        }
+
+        return w;
+    }
+
+    private static int WriteUrlEncodedReplacingInvalid(ReadOnlySpan<char> value, Span<char> dest)
+    {
+        var w = 0;
+        for (var i = 0; i < value.Length; i++)
+        {
+            var c = value[i];
+            if (c <= 0x7F)
+            {
+                if (IsUnreservedAscii(c))
+                {
+                    dest[w++] = c;
+                }
+                else
+                {
+                    dest[w++] = '%';
+                    WriteHexByte((byte)c, dest.Slice(w, 2));
+                    w += 2;
+                }
+            }
+            else if (char.IsHighSurrogate(c) && i + 1 < value.Length && char.IsLowSurrogate(value[i + 1]))
+            {
+                var low = value[++i];
+                var codePoint = 0x10000 + (c - 0xD800 << 10 | low - 0xDC00);
+                w += PercentEncodeUtf8FromCodePoint(codePoint, dest[w..]);
+            }
+            else
+            {
+                w += WriteReplacementChar(dest[w..]);
+            }
+        }
+
+        return w;
+    }
+
+    private static int GetQueryParamLength(ReadOnlySpan<char> key, ReadOnlySpan<char> value, bool urlEncode)
+    {
+        var keyLength = urlEncode ? GetUrlEncodedLengthReplacingInvalid(key) : key.Length;
+        var valueLength = urlEncode ? GetUrlEncodedLengthReplacingInvalid(value) : value.Length;
+        return 1 + keyLength + 1 + valueLength;
+    }
+
+    private static void WriteQueryParam(Span<char> destination, char prefix, ReadOnlySpan<char> key, ReadOnlySpan<char> value, bool urlEncode)
+    {
+        destination[0] = prefix;
+        var written = 1;
+
+        if (urlEncode)
+        {
+            written += WriteUrlEncodedReplacingInvalid(key, destination[written..]);
+            destination[written++] = '=';
+            written += WriteUrlEncodedReplacingInvalid(value, destination[written..]);
+            return;
+        }
+
+        key.CopyTo(destination[written..]);
+        written += key.Length;
+        destination[written++] = '=';
+        value.CopyTo(destination[written..]);
+    }
+
     public static ref ZaSpanStringBuilder AppendPathSegment(ref this ZaSpanStringBuilder builder, ReadOnlySpan<char> segment, char separator = '/')
     {
         if (builder.Length > 0 && builder[^1] != separator)
@@ -1048,7 +1387,6 @@ public static class ZaSpanStringBuilderExtensions
             builder.Append(separator);
         }
 
-        // Trim leading separators in segment
         var start = 0;
         while (start < segment.Length && segment[start] == separator) start++;
         if (start < segment.Length)
@@ -1061,21 +1399,63 @@ public static class ZaSpanStringBuilderExtensions
 
     public static ref ZaSpanStringBuilder AppendQueryParam(ref this ZaSpanStringBuilder builder, ReadOnlySpan<char> key, ReadOnlySpan<char> value, bool urlEncode = true, bool isFirst = false)
     {
-        builder.Append(isFirst ? '?' : '&');
-        if (urlEncode)
+        var required = GetQueryParamLength(key, value, urlEncode);
+        if (required > builder.RemainingSpan.Length)
         {
-            builder.AppendUrlEncoded(key);
-            builder.Append('=');
-            builder.AppendUrlEncoded(value);
-        }
-        else
-        {
-            builder.Append(key);
-            builder.Append('=');
-            builder.Append(value);
+            ThrowOutOfRangeException();
         }
 
+        WriteQueryParam(builder.RemainingSpan, isFirst ? '?' : '&', key, value, urlEncode);
+        builder.Advance(required);
         return ref builder;
+    }
+
+    public static ref ZaSpanStringBuilder AppendQueryParam(ref this ZaSpanStringBuilder builder, ReadOnlySpan<char> key, ReadOnlySpan<char> value, ref bool isFirst, bool urlEncode = true)
+    {
+        var required = GetQueryParamLength(key, value, urlEncode);
+        if (required > builder.RemainingSpan.Length)
+        {
+            ThrowOutOfRangeException();
+        }
+
+        WriteQueryParam(builder.RemainingSpan, isFirst ? '?' : '&', key, value, urlEncode);
+        builder.Advance(required);
+        isFirst = false;
+        return ref builder;
+    }
+
+    /// <summary>
+    ///     Appends a formatted string using the specified format and arguments.
+    ///     <para>
+    ///         Note: This overload currently delegates to <see cref="string.Format(string, object?[])" />
+    ///         and allocates a string due to <c>string.Format</c> requiring a string format parameter.
+    ///         A future optimization may implement a zero-allocation format parser for simple positional placeholders.
+    ///     </para>
+    /// </summary>
+    /// <param name="builder">The builder instance.</param>
+    /// <param name="format">A composite format string.</param>
+    /// <param name="args">An object array that contains zero or more objects to format.</param>
+    public static ref ZaSpanStringBuilder AppendFormat(ref this ZaSpanStringBuilder builder, ReadOnlySpan<char> format, params object?[] args)
+    {
+        return ref builder.AppendFormat(CultureInfo.InvariantCulture, format, args);
+    }
+
+    /// <summary>
+    ///     Appends a formatted string using the specified format provider, format, and arguments.
+    ///     <para>
+    ///         Note: This overload currently delegates to <see cref="string.Format(IFormatProvider, string, object?[])" />
+    ///         and allocates a string due to <c>string.Format</c> requiring a string format parameter.
+    ///         A future optimization may implement a zero-allocation format parser for simple positional placeholders.
+    ///     </para>
+    /// </summary>
+    /// <param name="builder">The builder instance.</param>
+    /// <param name="formatProvider">An object that supplies culture-specific formatting information.</param>
+    /// <param name="format">A composite format string.</param>
+    /// <param name="args">An object array that contains zero or more objects to format.</param>
+    public static ref ZaSpanStringBuilder AppendFormat(ref this ZaSpanStringBuilder builder, IFormatProvider? formatProvider, ReadOnlySpan<char> format, params object?[] args)
+    {
+        var formatted = string.Format(formatProvider, format.ToString(), args);
+        return ref builder.Append(formatted.AsSpan());
     }
 
     public static ref ZaSpanStringBuilder AppendFormat(ref this ZaSpanStringBuilder builder, string format, params object?[] args)

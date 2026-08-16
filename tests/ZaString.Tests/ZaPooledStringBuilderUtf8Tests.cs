@@ -123,4 +123,38 @@ public class ZaPooledStringBuilderUtf8Tests
         Assert.Equal((byte)'t', *(ptr + 3));
         Assert.Equal(0, *(ptr + 4));
     }
+
+    [Fact]
+    public unsafe void TryToUtf8NullTerminated_NegativeLength_ReturnsFalse()
+    {
+        using var builder = ZaPooledStringBuilder.Rent();
+        builder.Append("Test");
+
+        var success = builder.TryToUtf8NullTerminated(null, -1, out var bytesWritten);
+
+        Assert.False(success);
+        Assert.Equal(0, bytesWritten);
+    }
+
+    [Fact]
+    public void ZaUtf8Handle_IsRefStruct_PreventsHeapAllocation()
+    {
+        Assert.True(typeof(ZaUtf8Handle).IsByRefLike);
+    }
+
+    [Fact]
+    public unsafe void TryToUtf8NullTerminated_NegativeLengthWithBuffer_ReturnsFalse()
+    {
+        using var builder = ZaPooledStringBuilder.Rent();
+        builder.Append("Test");
+
+        Span<byte> buffer = stackalloc byte[10];
+        fixed (byte* ptr = buffer)
+        {
+            var success = builder.TryToUtf8NullTerminated(ptr, -1, out var bytesWritten);
+
+            Assert.False(success);
+            Assert.Equal(0, bytesWritten);
+        }
+    }
 }

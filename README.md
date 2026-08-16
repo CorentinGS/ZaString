@@ -24,6 +24,7 @@ Key highlights:
 - **UTF‑8 support**: Write bytes directly when you need to emit UTF‑8
 - **Escape helpers**: Ready-to-use JSON, HTML, CSV, URL escaping utilities
 - **Interpolated string handlers**: Integrates with C# interpolation for zero-cost formatting
+- **Stack and pooled workflows**: Choose `ZaSpanStringBuilder` for fixed buffers or `ZaPooledStringBuilder` for dynamically growing text
 
 ## 📦 Installation
 
@@ -85,6 +86,10 @@ using var builder = ZaPooledStringBuilder.Rent(128);
 builder.Append("Pooled string building")
        .Append(" with automatic cleanup");
 
+builder[0] = 'p';
+builder.RemoveLast(7);
+builder.Append("cleanup and edits");
+
 var result = builder.ToString();
 // Buffer automatically returned to pool when disposed
 ```
@@ -114,6 +119,7 @@ var age = 30;
 var pi = Math.PI;
 
 builder.Append($"User: {name}, Age: {age}, Pi: {pi:F2}");
+builder.Append($" | {age,4} | {pi,8:F2} |"); // alignment is supported
 ```
 
 ### Number Formatting
@@ -161,13 +167,56 @@ builder.AppendCsvEscaped("Value,with,commas");
 ### URL Building
 
 ```csharp
+var isFirst = true;
+
 builder.AppendPathSegment("api")
        .AppendPathSegment("v1")
        .AppendPathSegment("users")
-       .AppendQueryParam("q", "search term", isFirst: true)
-       .AppendQueryParam("page", "1");
+       .AppendQueryParam("q", "search term", ref isFirst)
+       .AppendQueryParam("page", "1", ref isFirst);
 // Result: "api/v1/users?q=search%20term&page=1"
 ```
+
+### Form URL Encoding vs URL Encoding
+
+```csharp
+Span<char> buffer = stackalloc char[128];
+var builder = ZaSpanStringBuilder.Create(buffer);
+
+builder.AppendUrlEncoded("Ada Lovelace");      // Ada%20Lovelace
+builder.Clear();
+builder.AppendFormUrlEncoded("Ada Lovelace");  // Ada+Lovelace
+```
+
+Use `AppendUrlEncoded()` for URL components and `AppendFormUrlEncoded()` for
+`application/x-www-form-urlencoded` payloads.
+
+### Mutation Helpers
+
+```csharp
+Span<char> buffer = stackalloc char[64];
+var builder = ZaSpanStringBuilder.Create(buffer);
+
+builder.Append("Status: pending");
+builder.SetLength(8); // keep "Status: "
+builder.Append("ready");
+builder.RemoveLast(1);
+builder.Append('!');
+
+Console.WriteLine(builder.AsSpan()); // Status: ready!
+```
+
+The pooled builder exposes the same mutation helpers plus `TryAppend()`
+overloads for `char`, `string`, and `ReadOnlySpan<char>`.
+
+### Span-Based Composite Formatting
+
+```csharp
+ReadOnlySpan<char> template = "User: {0}, Total: {1:C}";
+builder.AppendFormat(CultureInfo.InvariantCulture, template, "Alice", 42.5);
+```
+
+This is useful when the format template already exists as a span.
 
 ### TryAppend Methods
 
@@ -318,7 +367,7 @@ var result = builder.AsSpan(); // Zero allocation
 ### Disposal & Pooling
 
 - **ZaPooledStringBuilder**: Always use `using` or call `Dispose()` to return the internal buffer to the `ArrayPool`. Failure to do so will lead to memory leaks in the pool.
-- **ZaUtf8Handle**: This struct wraps a pooled array. You **MUST** call `Dispose()` when finished. Avoid copying this struct around, as multiple disposals of the same handle can corrupt the pool.
+- **ZaUtf8Handle**: This `ref struct` wraps a pooled array. You **MUST** call `Dispose()` when finished. Keep it local and short-lived; the `ref struct` shape prevents the unsafe copy/dispose patterns that a regular struct would allow.
 
 ### Unsafe Pointers
 
