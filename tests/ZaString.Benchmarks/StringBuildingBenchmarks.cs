@@ -45,7 +45,7 @@ public class StringBuildingBenchmarks
     }
 
     [Benchmark]
-    public int ZaSpanStringBuilder_BasicAppends()
+    public string ZaSpanStringBuilder_BasicAppends()
     {
         Span<char> buffer = stackalloc char[200];
         var builder = ZaSpanStringBuilder.Create(buffer);
@@ -59,7 +59,7 @@ public class StringBuildingBenchmarks
             .Append(", Active: ")
             .Append(TestBool);
 
-        return builder.Length;
+        return builder.ToString();
     }
 
     [Benchmark]
@@ -100,7 +100,7 @@ public class StringBuildingBenchmarks
     }
 
     [Benchmark]
-    public int ZaSpanStringBuilder_ManyAppends()
+    public string ZaSpanStringBuilder_ManyAppends()
     {
         Span<char> buffer = stackalloc char[500];
         var builder = ZaSpanStringBuilder.Create(buffer);
@@ -115,9 +115,7 @@ public class StringBuildingBenchmarks
                 .Append(" - ");
         }
 
-        builder.AsSpan();
-
-        return builder.Length;
+        return builder.ToString();
     }
 
     [Benchmark]
@@ -134,7 +132,7 @@ public class StringBuildingBenchmarks
     }
 
     [Benchmark]
-    public int ZaSpanStringBuilder_NumberFormatting()
+    public string ZaSpanStringBuilder_NumberFormatting()
     {
         Span<char> buffer = stackalloc char[200];
         var builder = ZaSpanStringBuilder.Create(buffer);
@@ -146,7 +144,7 @@ public class StringBuildingBenchmarks
             .Append(", Percentage: ")
             .Append(0.85, "P2");
 
-        return builder.Length;
+        return builder.ToString();
     }
 
     [Benchmark]
@@ -164,7 +162,7 @@ public class StringBuildingBenchmarks
     }
 
     [Benchmark]
-    public int ZaSpanStringBuilder_LargeString()
+    public string ZaSpanStringBuilder_LargeString()
     {
         Span<char> buffer = stackalloc char[8000];
         var builder = ZaSpanStringBuilder.Create(buffer);
@@ -176,8 +174,7 @@ public class StringBuildingBenchmarks
                 .Append(" of the benchmark test. ");
         }
 
-        builder.AsSpan();
-        return builder.Length;
+        return builder.ToString();
     }
 
     [Benchmark]
@@ -193,7 +190,7 @@ public class StringBuildingBenchmarks
     }
 
     [Benchmark]
-    public int ZaSpanStringBuilder_DateTimeFormatting()
+    public string ZaSpanStringBuilder_DateTimeFormatting()
     {
         Span<char> buffer = stackalloc char[200];
         var builder = ZaSpanStringBuilder.Create(buffer);
@@ -204,8 +201,7 @@ public class StringBuildingBenchmarks
             .Append(" at ")
             .Append(now, "HH:mm:ss");
 
-        builder.AsSpan();
-        return builder.Length;
+        return builder.ToString();
     }
 }
 
@@ -227,13 +223,12 @@ public class NumberFormattingBenchmarks
     }
 
     [Benchmark]
-    public int ZaSpanStringBuilder_Integer()
+    public string ZaSpanStringBuilder_Integer()
     {
         Span<char> buffer = stackalloc char[20];
         var builder = ZaSpanStringBuilder.Create(buffer);
         builder.Append(TestInt);
-        builder.AsSpan();
-        return builder.Length;
+        return builder.ToString();
     }
 
     [Benchmark]
@@ -245,13 +240,12 @@ public class NumberFormattingBenchmarks
     }
 
     [Benchmark]
-    public int ZaSpanStringBuilder_Double()
+    public string ZaSpanStringBuilder_Double()
     {
         Span<char> buffer = stackalloc char[30];
         var builder = ZaSpanStringBuilder.Create(buffer);
         builder.Append(TestDouble);
-        builder.AsSpan();
-        return builder.Length;
+        return builder.ToString();
     }
 
     [Benchmark]
@@ -263,13 +257,12 @@ public class NumberFormattingBenchmarks
     }
 
     [Benchmark]
-    public int ZaSpanStringBuilder_Float()
+    public string ZaSpanStringBuilder_Float()
     {
         Span<char> buffer = stackalloc char[20];
         var builder = ZaSpanStringBuilder.Create(buffer);
         builder.Append(TestFloat);
-        builder.AsSpan();
-        return builder.Length;
+        return builder.ToString();
     }
 
     [Benchmark]
@@ -281,13 +274,12 @@ public class NumberFormattingBenchmarks
     }
 
     [Benchmark]
-    public int ZaSpanStringBuilder_Long()
+    public string ZaSpanStringBuilder_Long()
     {
         Span<char> buffer = stackalloc char[25];
         var builder = ZaSpanStringBuilder.Create(buffer);
         builder.Append(TestLong);
-        builder.AsSpan();
-        return builder.Length;
+        return builder.ToString();
     }
 
     [Benchmark]
@@ -299,12 +291,12 @@ public class NumberFormattingBenchmarks
     }
 
     [Benchmark]
-    public int ZaSpanStringBuilder_IntegerFormatted()
+    public string ZaSpanStringBuilder_IntegerFormatted()
     {
         Span<char> buffer = stackalloc char[30];
         var builder = ZaSpanStringBuilder.Create(buffer);
         builder.Append(TestInt, "N0");
-        return builder.Length;
+        return builder.ToString();
     }
 
     [Benchmark]
@@ -316,13 +308,12 @@ public class NumberFormattingBenchmarks
     }
 
     [Benchmark]
-    public int ZaSpanStringBuilder_DoubleFormatted()
+    public string ZaSpanStringBuilder_DoubleFormatted()
     {
         Span<char> buffer = stackalloc char[20];
         var builder = ZaSpanStringBuilder.Create(buffer);
         builder.Append(TestDouble, "F2");
-        builder.AsSpan();
-        return builder.Length;
+        return builder.ToString();
     }
 }
 

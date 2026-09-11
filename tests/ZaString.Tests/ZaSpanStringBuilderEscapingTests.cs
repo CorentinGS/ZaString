@@ -28,6 +28,18 @@ public class ZaSpanStringBuilderEscapingTests
     }
 
     [Fact]
+    public void TryAppendJsonEscaped_LineAndParagraphSeparators_Unicode()
+    {
+        Span<char> buffer = stackalloc char[64];
+        var builder = ZaSpanStringBuilder.Create(buffer);
+
+        var ok = builder.TryAppendJsonEscaped("A\u2028B\u2029C");
+
+        Assert.True(ok);
+        Assert.Equal("A\\u2028B\\u2029C", builder.AsSpan());
+    }
+
+    [Fact]
     public void AppendHtmlEscaped_Basic()
     {
         Span<char> buffer = stackalloc char[64];
@@ -47,5 +59,44 @@ public class ZaSpanStringBuilderEscapingTests
         var ok = builder.TryAppendCsvEscaped(" a,\"b\"\n");
         Assert.True(ok);
         Assert.Equal("\" a,\"\"b\"\"\n\"", builder.AsSpan());
+    }
+
+    [Fact]
+    public void TryAppendJsonEscaped_InsufficientCapacity_DoesNotModifyBuilder()
+    {
+        Span<char> buffer = stackalloc char[10];
+        var builder = ZaSpanStringBuilder.Create(buffer);
+        builder.Append("hello");
+
+        var result = builder.TryAppendJsonEscaped("\"test\"");
+
+        Assert.False(result);
+        Assert.Equal("hello", builder.AsSpan().ToString());
+    }
+
+    [Fact]
+    public void TryAppendHtmlEscaped_InsufficientCapacity_DoesNotModifyBuilder()
+    {
+        Span<char> buffer = stackalloc char[10];
+        var builder = ZaSpanStringBuilder.Create(buffer);
+        builder.Append("hello");
+
+        var result = builder.TryAppendHtmlEscaped("<test>");
+
+        Assert.False(result);
+        Assert.Equal("hello", builder.AsSpan().ToString());
+    }
+
+    [Fact]
+    public void TryAppendCsvEscaped_InsufficientCapacity_DoesNotModifyBuilder()
+    {
+        Span<char> buffer = stackalloc char[10];
+        var builder = ZaSpanStringBuilder.Create(buffer);
+        builder.Append("hello");
+
+        var result = builder.TryAppendCsvEscaped("a,b\"c");
+
+        Assert.False(result);
+        Assert.Equal("hello", builder.AsSpan().ToString());
     }
 }

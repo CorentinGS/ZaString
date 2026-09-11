@@ -1,6 +1,11 @@
 ﻿<Project Sdk="Microsoft.NET.Sdk">
     <PropertyGroup>
         <TargetFrameworks>net8.0;net9.0;net10.0</TargetFrameworks>
+        <!-- NOTE: netstandard2.1 was considered but requires too many changes:
+             - Code uses C# 10+ features (file-scoped namespaces, global usings)
+             - Relies on ISpanFormattable, IUtf8SpanFormattable, InterpolatedStringHandler
+             - Uses CompositeFormat and Encoding.UTF8.TryGetBytes which are not available
+             Adding netstandard2.1 would require significant polyfilling and conditional compilation. -->
         <ImplicitUsings>enable</ImplicitUsings>
         <Nullable>enable</Nullable>
         <PackageId>ZaString</PackageId>
@@ -19,11 +24,9 @@
         <PublishRepositoryUrl>true</PublishRepositoryUrl>
         <EmbedUntrackedSources>true</EmbedUntrackedSources>
         <Deterministic>true</Deterministic>
-        <ContinuousIntegrationBuild>true</ContinuousIntegrationBuild>
+        <ContinuousIntegrationBuild Condition="'$(CI)' == 'true'">true</ContinuousIntegrationBuild>
         <AllowUnsafeBlocks>true</AllowUnsafeBlocks>
-        <Version>0.2.6</Version>
-        <PackageVersion>0.2.6</PackageVersion>
-        <MinVerSkip>true</MinVerSkip>
+
 
         <!-- MinVer configuration -->
         <MinVerTagPrefix>v</MinVerTagPrefix>
