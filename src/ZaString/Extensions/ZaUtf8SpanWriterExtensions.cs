@@ -29,13 +29,14 @@ public static class ZaUtf8SpanWriterExtensions
     {
         if (value is not null)
         {
-            var bytes = Encoding.UTF8.GetByteCount(value);
+            var span = value.AsSpan();
+            var bytes = Encoding.UTF8.GetByteCount(span);
             if (bytes > writer.RemainingSpan.Length)
             {
                 ThrowOutOfRangeException();
             }
 
-            var written = Encoding.UTF8.GetBytes(value, writer.RemainingSpan);
+            var written = Encoding.UTF8.GetBytes(span, writer.RemainingSpan);
             writer.Advance(written);
         }
 
@@ -44,19 +45,15 @@ public static class ZaUtf8SpanWriterExtensions
 
     public static ref ZaUtf8SpanWriter Append(ref this ZaUtf8SpanWriter writer, char value)
     {
-        var bytes = Encoding.UTF8.GetByteCount(stackalloc char[1]
-        {
-            value
-        });
+        Span<char> chars = stackalloc char[1];
+        chars[0] = value;
+        var bytes = Encoding.UTF8.GetByteCount(chars);
         if (bytes > writer.RemainingSpan.Length)
         {
             ThrowOutOfRangeException();
         }
 
-        var written = Encoding.UTF8.GetBytes(stackalloc char[1]
-        {
-            value
-        }, writer.RemainingSpan);
+        var written = Encoding.UTF8.GetBytes(chars, writer.RemainingSpan);
         writer.Advance(written);
         return ref writer;
     }

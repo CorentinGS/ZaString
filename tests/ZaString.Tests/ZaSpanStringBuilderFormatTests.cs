@@ -54,4 +54,31 @@ public class ZaSpanStringBuilderFormatTests
         var expected = string.Format("Int: {0:N0}, Double: {1:F2}", 123, 456.789);
         Assert.Equal(expected, builder.AsSpan().ToString());
     }
+
+    [Fact]
+    public void AppendFormat_ReadOnlySpan_Works()
+    {
+        Span<char> buffer = stackalloc char[256];
+        var builder = ZaSpanStringBuilder.Create(buffer);
+
+        var format = "User: {0}, Balance: {1:C}".AsSpan();
+        builder.AppendFormat(format, "John", 1234.56);
+
+        var expected = string.Format(CultureInfo.InvariantCulture, "User: {0}, Balance: {1:C}", "John", 1234.56);
+        Assert.Equal(expected, builder.AsSpan().ToString());
+    }
+
+    [Fact]
+    public void AppendFormat_ReadOnlySpan_WithCulture_Works()
+    {
+        Span<char> buffer = stackalloc char[256];
+        var builder = ZaSpanStringBuilder.Create(buffer);
+
+        var culture = new CultureInfo("fr-FR");
+        var format = "Balance: {0:C}".AsSpan();
+        builder.AppendFormat(culture, format, 1234.56);
+
+        var expected = string.Format(culture, "Balance: {0:C}", 1234.56);
+        Assert.Equal(expected, builder.AsSpan().ToString());
+    }
 }

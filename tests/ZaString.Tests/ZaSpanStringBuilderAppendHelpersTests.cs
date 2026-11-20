@@ -82,4 +82,40 @@ public class ZaSpanStringBuilderAppendHelpersTests
 
         Assert.Equal("1,5; 2,5", builder.AsSpan());
     }
+
+    [Fact]
+    public void AppendJoin_IEnumerableString_Works()
+    {
+        Span<char> buffer = stackalloc char[32];
+        var builder = ZaSpanStringBuilder.Create(buffer);
+
+        var values = new List<string?> { "a", null, "c" };
+        builder.AppendJoin(", ".AsSpan(), values);
+
+        Assert.Equal("a, , c", builder.AsSpan());
+    }
+
+    [Fact]
+    public void AppendJoin_IEnumerableString_EmptyList()
+    {
+        Span<char> buffer = stackalloc char[32];
+        var builder = ZaSpanStringBuilder.Create(buffer);
+
+        var values = new List<string?>();
+        builder.AppendJoin(", ".AsSpan(), values);
+
+        Assert.Equal("", builder.AsSpan());
+    }
+
+    [Fact]
+    public void AppendJoin_IEnumerableString_SingleItem()
+    {
+        Span<char> buffer = stackalloc char[32];
+        var builder = ZaSpanStringBuilder.Create(buffer);
+
+        var values = new List<string?> { "only" };
+        builder.AppendJoin(", ".AsSpan(), values);
+
+        Assert.Equal("only", builder.AsSpan());
+    }
 }

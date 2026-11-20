@@ -7,3 +7,5 @@ riderModule.iml
 artifacts
 .github/instructions
 build_log.txt
+.opencode/
+.worktrees/

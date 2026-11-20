@@ -32,6 +32,19 @@ public class ZaSpanStringBuilderMutationHelpersTests
     }
 
     [Fact]
+    public void RemoveLast_Extension_RemovesCorrectly()
+    {
+        Span<char> buffer = stackalloc char[16];
+        var builder = ZaSpanStringBuilder.Create(buffer);
+        builder.Append("abcdef");
+
+        ZaSpanStringBuilderExtensions.RemoveLast(ref builder, 2);
+
+        Assert.Equal("abcd", builder.AsSpan());
+        Assert.Equal(4, builder.Length);
+    }
+
+    [Fact]
     public void EnsureEndsWith_AppendsWhenMissing()
     {
         Span<char> buffer = stackalloc char[10];

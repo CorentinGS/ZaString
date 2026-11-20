@@ -7,11 +7,9 @@ using System.Text;
 namespace ZaString.Core;
 
 /// <summary>
-///     A zero-allocation string builder that writes directly to a provided Span
-///     <char>
-///         .
-///         This is a ref struct to ensure it is only allocated on the stack.
-///         Append operations are provided as extension methods to allow for a fluent, chainable API.
+///     A zero-allocation string builder that writes directly to a provided Span&lt;char&gt;.
+///     This is a ref struct to ensure it is only allocated on the stack.
+///     Append operations are provided as extension methods to allow for a fluent, chainable API.
 /// </summary>
 public ref struct ZaSpanStringBuilder
 {
@@ -52,7 +50,7 @@ public ref struct ZaSpanStringBuilder
     /// </summary>
     /// <param name="index">The zero-based index of the character to access.</param>
     /// <returns>A reference to the character at the specified index.</returns>
-    /// <exception cref="IndexOutOfRangeException">
+    /// <exception cref="ArgumentOutOfRangeException">
     ///     Thrown when the index is negative or greater than or equal to the current
     ///     length.
     /// </exception>
@@ -61,7 +59,7 @@ public ref struct ZaSpanStringBuilder
         get
         {
             if ((uint)index >= (uint)Length)
-                throw new IndexOutOfRangeException();
+                throw new ArgumentOutOfRangeException(nameof(index));
             return ref _buffer[index];
         }
     }
@@ -109,8 +107,8 @@ public ref struct ZaSpanStringBuilder
     /// <param name="count">The number of characters written.</param>
     public void Advance(int count)
     {
-        Debug.Assert(count >= 0, "Advance count must be non-negative.");
-        Debug.Assert(Length + count <= Capacity, "Advance would exceed capacity.");
+        if (count < 0 || count > Capacity - Length)
+            throw new ArgumentOutOfRangeException(nameof(count));
         Length += count;
     }
 
@@ -279,6 +277,12 @@ public ref struct ZaSpanStringBuilder
 
     public unsafe readonly bool TryToUtf8NullTerminated(byte* buffer, int length, out int bytesWritten)
     {
+        if (length < 0)
+        {
+            bytesWritten = 0;
+            return false;
+        }
+
         if (buffer == null)
         {
             bytesWritten = 0;
