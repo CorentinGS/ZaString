@@ -1,3 +1,5 @@
+
+
 # ZaString
 
 ![ZaString logo](assets/logo.png)
@@ -288,7 +290,7 @@ var result = builder.AsSpan(); // Zero allocation
 - `AsSpan()` - Get result as `ReadOnlySpan<char>`
 - `ToString()` - Get result as string (allocates)
 - `Clear()` - Reset builder for reuse
-- `SetLength(int)` - Set current length
+- `SetLength(int)` - Truncate to a specified length
 - `RemoveLast(int)` - Remove characters from end
 
 ### Extension Methods
